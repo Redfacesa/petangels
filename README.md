@@ -29,6 +29,10 @@ In the Pet Angels Supabase project → SQL editor, run:
 
 That creates tables, RLS, the `petimages` public bucket policies, and demo seed (Manace, Happy Paws, Cape Animal Rescue).
 
+Then run the hardening pass:
+
+`supabase/migrations/20260921_pet_angels_harden.sql`
+
 Then enable Email auth under Authentication.
 
 ## Setup

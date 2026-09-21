@@ -168,9 +168,8 @@ insert into storage.buckets (id, name, public)
 values ('petimages', 'petimages', true)
 on conflict (id) do update set public = true;
 
-drop policy if exists petimages_public_read on storage.objects;
-create policy petimages_public_read on storage.objects
-  for select using (bucket_id = 'petimages');
+-- Public bucket URLs work without a Storage SELECT policy.
+-- A SELECT policy would let anon list every object.
 
 drop policy if exists petimages_auth_insert on storage.objects;
 create policy petimages_auth_insert on storage.objects
@@ -194,12 +193,30 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  base_handle text;
+  next_handle text;
 begin
+  base_handle := lower(regexp_replace(
+    coalesce(nullif(new.raw_user_meta_data->>'handle', ''), split_part(new.email, '@', 1)),
+    '[^a-z0-9]+',
+    '',
+    'g'
+  ));
+  if base_handle is null or base_handle = '' then
+    base_handle := 'angel';
+  end if;
+  base_handle := left(base_handle, 18);
+  next_handle := base_handle;
+  if exists (select 1 from public.pa_profiles p where p.handle = next_handle) then
+    next_handle := left(base_handle, 12) || left(replace(new.id::text, '-', ''), 6);
+  end if;
+
   insert into public.pa_profiles (id, auth_user_id, handle, name, account_type, city)
   values (
     new.id::text,
     new.id,
-    coalesce(nullif(new.raw_user_meta_data->>'handle', ''), split_part(new.email, '@', 1)),
+    next_handle,
     coalesce(nullif(new.raw_user_meta_data->>'full_name', ''), 'Pet Angel'),
     coalesce(nullif(new.raw_user_meta_data->>'account_type', ''), 'pet_parent'),
     coalesce(new.raw_user_meta_data->>'city', '')
