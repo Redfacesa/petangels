@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background: #f6f0e6;
+  color: #1c1917;
+}
+
+body {
+  @apply antialiased;
+}
+
+.btn-primary {
+  @apply inline-flex min-h-11 items-center justify-center rounded-full bg-pa-forest px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-pa-forestDark disabled:opacity-60;
+}
+
+.btn-rose {
+  @apply inline-flex min-h-11 items-center justify-center rounded-full bg-pa-rose px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:opacity-90 disabled:opacity-60;
+}
+
+.btn-ghost {
+  @apply inline-flex min-h-11 items-center justify-center rounded-full border border-pa-sand bg-pa-paper px-5 py-2.5 text-sm font-semibold text-pa-ink shadow-soft transition hover:border-pa-forest;
+}
+
+.card {
+  @apply rounded-3xl border border-pa-sand bg-pa-paper shadow-card;
+}
+
+.input {
+  @apply w-full rounded-2xl border border-pa-sand bg-white px-4 py-3 text-sm text-pa-ink placeholder:text-pa-muted focus:border-pa-forest focus:outline-none focus:ring-2 focus:ring-pa-forest/20;
+}
+
+.label {
+  @apply mb-1.5 block text-sm font-medium text-pa-muted;
+}
+
+.pb-nav {
+  padding-bottom: calc(6.5rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  .pb-nav {
+    padding-bottom: 2rem;
+  }
+}
