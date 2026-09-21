@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { CatalogProvider } from './contexts/CatalogContext';
 import AppShell from './components/AppShell';
 import WelcomePage from './pages/WelcomePage';
 import HomePage from './pages/HomePage';
@@ -23,6 +24,7 @@ import LegalPage from './pages/LegalPage';
 export default function App() {
   return (
     <AuthProvider>
+      <CatalogProvider>
       <BrowserRouter>
         <Routes>
           <Route element={<AppShell />}>
@@ -48,6 +50,7 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      </CatalogProvider>
     </AuthProvider>
   );
 }

@@ -1,9 +1,12 @@
 import { Link, useParams } from 'react-router-dom';
-import { animalById, profileById } from '../lib/seed';
-import { beginPay } from '../lib/redface-pay';
+import { useCatalog } from '../contexts/CatalogContext';
+import { useAuth } from '../contexts/AuthContext';
+import { checkoutWithRedFacePay } from '../lib/redface-pay';
 
 export default function AnimalPage() {
   const { id } = useParams();
+  const { user } = useAuth();
+  const { animalById, profileById } = useCatalog();
   const animal = id ? animalById(id) : undefined;
   if (!animal) return <p className="p-8 text-center text-pa-muted">Animal not found.</p>;
   const org = profileById(animal.orgId);
@@ -37,12 +40,14 @@ export default function AnimalPage() {
           type="button"
           className="btn-rose"
           onClick={() =>
-            beginPay({
+            void checkoutWithRedFacePay({
               merchantId: org?.redfaceMerchantId,
               amountZar: 150,
               label: `Pet Angels · Support ${animal.name}`,
               kind: 'donation',
               returnPath: `/animals/${animal.id}?donated=1`,
+              payerId: user?.id,
+              payeeProfileId: org?.id,
             })
           }
         >

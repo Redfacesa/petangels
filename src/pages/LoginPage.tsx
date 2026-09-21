@@ -2,8 +2,6 @@ import { FormEvent, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import BrandMark from '../components/BrandMark';
 import { useAuth } from '../contexts/AuthContext';
-import { isSsoEnabled } from '../lib/config';
-import { buildSsoLoginUrl } from '../lib/redface-pay';
 
 export default function LoginPage() {
   const { signIn, configured } = useAuth();
@@ -31,12 +29,9 @@ export default function LoginPage() {
     <div className="mx-auto max-w-md px-4 py-12">
       <BrandMark />
       <h1 className="mt-8 font-display text-3xl">Welcome back</h1>
-      <p className="mt-2 text-sm text-pa-muted">Sign in with your Pet Angels / RedFace Pay account.</p>
-      {isSsoEnabled() && (
-        <a href={buildSsoLoginUrl({ role: 'customer', nextPath: next })} className="btn-primary mt-6 w-full">
-          Continue with RedFace Pay
-        </a>
-      )}
+      <p className="mt-2 text-sm text-pa-muted">
+        Sign in to Pet Angels. Checkout, donations, and merchant payouts still go through RedFace Pay.
+      </p>
       <form className="mt-8 space-y-4" onSubmit={onSubmit}>
         <div>
           <label className="label" htmlFor="email">
@@ -50,7 +45,9 @@ export default function LoginPage() {
           </label>
           <input id="password" name="password" type="password" className="input" required />
         </div>
-        {!configured && <p className="text-xs text-pa-muted">Auth is not configured — use Continue with RedFace Pay, or explore without signing in.</p>}
+        {!configured && (
+          <p className="text-xs text-pa-muted">Database is not configured. You can still browse the community.</p>
+        )}
         {error && <p className="text-sm text-pa-rose">{error}</p>}
         <button className="btn-primary w-full" disabled={loading} type="submit">
           {loading ? 'Signing in…' : 'Sign in'}

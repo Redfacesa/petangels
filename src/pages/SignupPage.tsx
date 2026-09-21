@@ -4,8 +4,8 @@ import BrandMark from '../components/BrandMark';
 import { useAuth } from '../contexts/AuthContext';
 import { saveLocalProfile } from '../lib/store';
 import type { AccountType } from '../lib/types';
-import { isSsoEnabled } from '../lib/config';
-import { buildSsoLoginUrl } from '../lib/redface-pay';
+import { upsertMyProfile } from '../lib/db';
+import { supabase } from '../lib/supabase';
 
 export default function SignupPage() {
   const { signUp, configured } = useAuth();
@@ -30,11 +30,26 @@ export default function SignupPage() {
     saveLocalProfile({ displayName: name, handle, city, accountType: type });
 
     if (configured) {
-      const result = await signUp(email, password, { full_name: name, account_type: type });
+      const result = await signUp(email, password, {
+        full_name: name,
+        account_type: type,
+        city,
+        handle,
+      });
       if (result.error) {
         setError(result.error);
         setLoading(false);
         return;
+      }
+      const { data } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
+      if (data.user) {
+        await upsertMyProfile({
+          userId: data.user.id,
+          handle,
+          name,
+          accountType: type,
+          city,
+        });
       }
     }
     setLoading(false);
@@ -55,22 +70,13 @@ export default function SignupPage() {
       <h1 className="mt-8 font-display text-3xl">Create your Pet Angels account</h1>
       <p className="mt-2 text-sm text-pa-muted">
         {type === 'merchant'
-          ? 'Businesses sell through RedFace Pay. Start here, then connect your merchant link.'
+          ? 'Your login lives on Pet Angels. Selling uses your RedFace Pay merchant link.'
           : type === 'shelter'
-            ? 'Rescue organisations get a verified profile, animals, cases, and donations.'
+            ? 'Rescue organisations get a verified profile here. Donations still settle on RedFace Pay.'
             : 'Pet parents get a profile, animals, stories, marketplace, and donations.'}
       </p>
 
-      {isSsoEnabled() && (
-        <a
-          href={buildSsoLoginUrl({ role: type === 'merchant' ? 'vendor' : 'customer', nextPath: next })}
-          className="btn-primary mt-6 w-full"
-        >
-          Continue with RedFace Pay
-        </a>
-      )}
-
-      <form className="mt-8 space-y-4" onSubmit={onSubmit}>
+      <form className="mt-8 space-y-4" onSubmit={(e) => void onSubmit(e)}>
         <div>
           <label className="label" htmlFor="name">
             {type === 'pet_parent' ? 'Your name' : 'Organisation name'}
@@ -97,8 +103,7 @@ export default function SignupPage() {
         </div>
         {!configured && (
           <p className="text-xs text-pa-muted">
-            RedFace Auth keys are not in this environment yet — we still save a local profile so you can explore
-            the app.
+            Pet Angels database keys are missing — a local profile is still saved so you can explore.
           </p>
         )}
         {error && <p className="text-sm text-pa-rose">{error}</p>}

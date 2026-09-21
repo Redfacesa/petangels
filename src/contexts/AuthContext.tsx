@@ -11,7 +11,7 @@ type AuthValue = {
   signUp: (
     email: string,
     password: string,
-    meta?: { full_name?: string; account_type?: string },
+    meta?: { full_name?: string; account_type?: string; city?: string; handle?: string },
   ) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
 };
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       configured: supabaseConfigured,
       signIn: async (email, password) => {
-        if (!supabase) return { error: 'Auth is not configured yet. Add your RedFace Pay anon key.' };
+        if (!supabase) return { error: 'Auth is not configured yet. Add the Pet Angels Supabase publishable key.' };
         const { error } = await supabase.auth.signInWithPassword({
           email: email.trim().toLowerCase(),
           password,
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return error ? { error: error.message } : {};
       },
       signUp: async (email, password, meta) => {
-        if (!supabase) return { error: 'Auth is not configured yet. Add your RedFace Pay anon key.' };
+        if (!supabase) return { error: 'Auth is not configured yet. Add the Pet Angels Supabase publishable key.' };
         const { error } = await supabase.auth.signUp({
           email: email.trim().toLowerCase(),
           password,
@@ -60,6 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             data: {
               full_name: meta?.full_name || '',
               account_type: meta?.account_type || 'pet_parent',
+              city: meta?.city || '',
+              handle: meta?.handle || '',
               ecosystem_from: 'pet-angels',
             },
           },

@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { animals, profiles } from '../lib/seed';
+import { useCatalog } from '../contexts/CatalogContext';
 
 export default function DiscoverPage() {
+  const { profiles, animals } = useCatalog();
   const people = profiles.filter((p) => p.type === 'pet_parent');
   const shops = profiles.filter((p) => p.type === 'merchant');
   const shelters = profiles.filter((p) => p.type === 'shelter');
@@ -51,7 +52,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function ProfileRow({ items }: { items: typeof profiles }) {
+function ProfileRow({ items }: { items: ReturnType<typeof useCatalog>['profiles'] }) {
   return (
     <div className="flex gap-3 overflow-x-auto pb-2">
       {items.map((p) => (

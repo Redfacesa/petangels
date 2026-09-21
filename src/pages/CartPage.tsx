@@ -1,27 +1,31 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { productById, profileById } from '../lib/seed';
 import { loadCart, saveCart } from '../lib/store';
 import { zar } from '../lib/config';
-import { beginPay } from '../lib/redface-pay';
+import { checkoutWithRedFacePay } from '../lib/redface-pay';
+import { useCatalog } from '../contexts/CatalogContext';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function CartPage() {
+  const { user } = useAuth();
+  const { productById, profileById } = useCatalog();
   const [items, setItems] = useState(() => loadCart());
   const rows = useMemo(
     () =>
       items
         .map((i) => ({ ...i, product: productById(i.productId) }))
         .filter((r) => r.product),
-    [items],
+    [items, productById],
   );
   const total = rows.reduce((sum, r) => sum + (r.product?.price || 0) * r.qty, 0);
 
   function checkout() {
-    beginPay({
+    void checkoutWithRedFacePay({
       amountZar: total || 1,
       label: `Pet Angels cart · ${rows.length} item(s)`,
       kind: 'product',
       returnPath: '/profile?paid=1',
+      payerId: user?.id,
     });
   }
 

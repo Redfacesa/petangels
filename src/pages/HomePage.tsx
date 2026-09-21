@@ -1,17 +1,16 @@
 import FeedCard from '../components/FeedCard';
-import { posts } from '../lib/seed';
-import { loadUserPosts } from '../lib/store';
-import { useMemo } from 'react';
+import { useCatalog } from '../contexts/CatalogContext';
 
 export default function HomePage() {
-  const feed = useMemo(() => [...loadUserPosts(), ...posts], []);
+  const { posts, loading } = useCatalog();
   return (
     <div className="mx-auto max-w-xl px-4 py-6">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Community</p>
       <h1 className="mt-1 font-display text-3xl text-pa-ink">Your animal feed</h1>
       <p className="mt-2 text-sm text-pa-muted">Stories, recoveries, shops, and animals who need a home — mixed, on purpose.</p>
+      {loading && <p className="mt-4 text-sm text-pa-muted">Loading from Pet Angels…</p>}
       <div className="mt-6 space-y-5">
-        {feed.map((post) => (
+        {posts.map((post) => (
           <FeedCard key={post.id} post={post} />
         ))}
       </div>

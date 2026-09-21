@@ -1,14 +1,7 @@
 import { ECOSYSTEM_FROM, PLATFORM_MERCHANT_ID, REDFACE_PAY_URL, siteUrl } from './config';
+import type { PayKind } from './types';
 
-export type PayKind =
-  | 'product'
-  | 'service'
-  | 'donation'
-  | 'sponsorship'
-  | 'adoption'
-  | 'fundraiser'
-  | 'featured'
-  | 'subscription';
+export type { PayKind };
 
 export function buildMerchantPayUrl(opts: {
   merchantId?: string;
@@ -51,6 +44,24 @@ export function buildMerchantSignupUrl() {
 
 export function beginPay(opts: Parameters<typeof buildMerchantPayUrl>[0]) {
   window.location.href = buildMerchantPayUrl(opts);
+}
+
+export async function checkoutWithRedFacePay(
+  opts: Parameters<typeof buildMerchantPayUrl>[0] & {
+    payerId?: string;
+    payeeProfileId?: string;
+  },
+) {
+  const { recordPayHandoff } = await import('./db');
+  await recordPayHandoff({
+    payerId: opts.payerId,
+    payeeProfileId: opts.payeeProfileId,
+    kind: opts.kind || 'product',
+    amountZar: opts.amountZar,
+    label: opts.label,
+    merchantId: opts.merchantId,
+  });
+  beginPay(opts);
 }
 
 function pick(hash: URLSearchParams, search: URLSearchParams, key: string) {

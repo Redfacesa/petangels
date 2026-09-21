@@ -1,12 +1,15 @@
 import { Link, useParams } from 'react-router-dom';
-import { posts, products, animals, profileByHandle } from '../lib/seed';
 import ProductCard from '../components/ProductCard';
 import FeedCard from '../components/FeedCard';
-import { beginPay } from '../lib/redface-pay';
+import { useCatalog } from '../contexts/CatalogContext';
+import { useAuth } from '../contexts/AuthContext';
+import { checkoutWithRedFacePay } from '../lib/redface-pay';
 
 export default function PublicProfilePage() {
   const { handle } = useParams();
-  const profile = handle ? profileByHandle(handle) : undefined;
+  const { user } = useAuth();
+  const { posts, products, animals, profileById } = useCatalog();
+  const profile = handle ? profileById(handle) : undefined;
   if (!profile) return <p className="p-8 text-center text-pa-muted">Profile not found.</p>;
 
   const theirPosts = posts.filter((p) => p.authorId === profile.id);
@@ -31,35 +34,31 @@ export default function PublicProfilePage() {
             </h1>
             <p className="text-sm text-pa-forest">{role}</p>
             <p className="mt-2 text-sm text-pa-muted">{profile.bio}</p>
-            {profile.pets && <p className="mt-2 text-sm">🐶 {profile.pets.join(' · 🐱 ')}</p>}
-            {profile.categories && <p className="mt-2 text-sm">🐾 {profile.categories.join(' · ')}</p>}
-            {profile.stats && (
-              <dl className="mt-3 flex flex-wrap gap-4 text-sm">
-                {Object.entries(profile.stats).map(([k, v]) => (
-                  <div key={k}>
-                    <dt className="text-xs uppercase tracking-wider text-pa-muted">{k}</dt>
-                    <dd className="font-semibold">{v}</dd>
-                  </div>
-                ))}
-              </dl>
+            {profile.pets && profile.pets.length > 0 && (
+              <p className="mt-2 text-sm">🐶 {profile.pets.join(' · 🐱 ')}</p>
+            )}
+            {profile.categories && profile.categories.length > 0 && (
+              <p className="mt-2 text-sm">🐾 {profile.categories.join(' · ')}</p>
             )}
           </div>
         </div>
-        {profile.type === 'shelter' && (
+        {(profile.type === 'shelter' || profile.type === 'merchant') && (
           <button
             type="button"
             className="btn-rose mt-5"
             onClick={() =>
-              beginPay({
+              void checkoutWithRedFacePay({
                 merchantId: profile.redfaceMerchantId,
                 amountZar: 200,
                 label: `Donation · ${profile.name}`,
                 kind: 'donation',
                 returnPath: `/u/${profile.handle}?donated=1`,
+                payerId: user?.id,
+                payeeProfileId: profile.id,
               })
             }
           >
-            Donate with RedFace Pay
+            {profile.type === 'shelter' ? 'Donate with RedFace Pay' : 'Pay this store with RedFace Pay'}
           </button>
         )}
       </div>

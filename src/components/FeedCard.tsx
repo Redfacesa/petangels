@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Post } from '../lib/types';
-import { profileById } from '../lib/seed';
+import { useCatalog } from '../contexts/CatalogContext';
 import { loadLikes, toggleLike } from '../lib/store';
 import { useState } from 'react';
 
@@ -10,6 +10,7 @@ function formatCount(n: number) {
 }
 
 export default function FeedCard({ post }: { post: Post }) {
+  const { profileById } = useCatalog();
   const author = profileById(post.authorId);
   const [liked, setLiked] = useState(() => loadLikes().includes(post.id));
   const extra = liked ? 1 : 0;

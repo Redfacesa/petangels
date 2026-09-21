@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import type { Product } from '../lib/types';
-import { profileById } from '../lib/seed';
+import { useCatalog } from '../contexts/CatalogContext';
 import { zar } from '../lib/config';
 
 export default function ProductCard({ product }: { product: Product }) {
+  const { profileById } = useCatalog();
   const seller = profileById(product.sellerId);
   return (
     <Link to={`/marketplace/${product.id}`} className="card block overflow-hidden">

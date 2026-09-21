@@ -1,11 +1,14 @@
 import { useParams } from 'react-router-dom';
-import { profileById } from '../lib/seed';
-import { beginPay } from '../lib/redface-pay';
+import { checkoutWithRedFacePay } from '../lib/redface-pay';
+import { useCatalog } from '../contexts/CatalogContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const amounts = [50, 100, 200, 500];
 
 export default function DonatePage() {
   const { orgId } = useParams();
+  const { user } = useAuth();
+  const { profileById } = useCatalog();
   const org = orgId ? profileById(orgId) : undefined;
   const name = org?.name || 'Pet Angels Rescue';
 
@@ -15,7 +18,7 @@ export default function DonatePage() {
       <h1 className="mt-1 font-display text-3xl">Support {name}</h1>
       <p className="mt-3 text-sm text-pa-muted">
         Donations, sponsorships, and fundraising run on RedFace Pay — the same merchant rails as product
-        checkout.
+        checkout. Pet Angels records the handoff in this database.
       </p>
       <div className="mt-6 grid grid-cols-2 gap-3">
         {amounts.map((n) => (
@@ -24,12 +27,14 @@ export default function DonatePage() {
             type="button"
             className="btn-ghost"
             onClick={() =>
-              beginPay({
+              void checkoutWithRedFacePay({
                 merchantId: org?.redfaceMerchantId,
                 amountZar: n,
                 label: `Donation · ${name}`,
                 kind: 'donation',
                 returnPath: `/u/${org?.handle || 'capeanimalrescue'}?donated=1`,
+                payerId: user?.id,
+                payeeProfileId: org?.id,
               })
             }
           >
@@ -41,12 +46,14 @@ export default function DonatePage() {
         type="button"
         className="btn-rose mt-4 w-full"
         onClick={() =>
-          beginPay({
+          void checkoutWithRedFacePay({
             merchantId: org?.redfaceMerchantId,
             amountZar: 250,
             label: `Sponsorship · ${name}`,
             kind: 'sponsorship',
             returnPath: '/home',
+            payerId: user?.id,
+            payeeProfileId: org?.id,
           })
         }
       >

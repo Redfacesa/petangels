@@ -1,16 +1,20 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
-import { animals, products } from '../lib/seed';
+import { useCatalog } from '../contexts/CatalogContext';
 
 export default function MarketplacePage() {
   const [params] = useSearchParams();
   const seller = params.get('seller');
+  const { products, animals, profileById } = useCatalog();
   const catalog = useMemo(() => {
     if (!seller) return products;
     if (seller === 'happypaws') return products.filter((p) => p.sellerId === 'p-happypaws');
-    return products.filter((p) => p.sellerId.includes(seller));
-  }, [seller]);
+    return products.filter((p) => {
+      const shop = profileById(p.sellerId);
+      return shop?.handle === seller || p.sellerId.includes(seller);
+    });
+  }, [seller, products, profileById]);
   const goods = catalog.filter((p) => p.kind === 'product');
   const services = catalog.filter((p) => p.kind === 'service');
   const looking = animals.filter((a) => a.status !== 'adopted');

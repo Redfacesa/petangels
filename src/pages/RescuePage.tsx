@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { rescueCases, animals, profileById } from '../lib/seed';
+import { useCatalog } from '../contexts/CatalogContext';
 
 export default function RescuePage() {
+  const { cases, animals, profileById } = useCatalog();
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Rescue</p>
@@ -17,7 +18,7 @@ export default function RescuePage() {
 
       <h2 className="mt-10 font-display text-xl text-pa-forest">Active cases</h2>
       <div className="mt-3 space-y-3">
-        {rescueCases.map((c) => {
+        {cases.map((c) => {
           const org = profileById(c.orgId);
           return (
             <article key={c.id} className="card flex gap-3 overflow-hidden p-0">

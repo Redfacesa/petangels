@@ -1,15 +1,16 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useCatalog } from '../contexts/CatalogContext';
 import { loadLocalProfile, saveLocalProfile } from '../lib/store';
-import { profiles } from '../lib/seed';
-import { beginPay } from '../lib/redface-pay';
+import { checkoutWithRedFacePay } from '../lib/redface-pay';
 
 export default function ProfilePage() {
   const { user, signOut, loading } = useAuth();
+  const { profileById } = useCatalog();
   const [params] = useSearchParams();
   const paid = params.get('paid') === '1';
   const local = loadLocalProfile();
-  const demo = profiles[0];
+  const mine = user ? profileById(user.id) : undefined;
 
   if (loading) return <p className="p-10 text-center text-pa-muted">Loading…</p>;
 
@@ -18,14 +19,15 @@ export default function ProfilePage() {
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="font-display text-3xl">Your place in the ecosystem</h1>
         <p className="mt-3 text-sm text-pa-muted">
-          Create a pet-parent profile, register a business, or apply as a verified rescue.
+          Create a pet-parent profile, register a business, or apply as a verified rescue. Payments use
+          RedFace Pay.
         </p>
         <div className="mt-6 flex flex-col gap-3">
           <Link to="/signup" className="btn-primary">
             Sign up
           </Link>
           <Link to="/login" className="btn-ghost">
-            Sign in with RedFace Pay
+            Sign in
           </Link>
           <button
             type="button"
@@ -47,9 +49,9 @@ export default function ProfilePage() {
     );
   }
 
-  const name = user?.user_metadata?.full_name || local?.displayName || demo.name;
-  const type = (user?.user_metadata?.account_type as string) || local?.accountType || 'pet_parent';
-  const city = local?.city || demo.city;
+  const name = mine?.name || user?.user_metadata?.full_name || local?.displayName || 'Pet Angel';
+  const type = mine?.type || (user?.user_metadata?.account_type as string) || local?.accountType || 'pet_parent';
+  const city = mine?.city || local?.city || '';
 
   return (
     <div className="mx-auto max-w-lg px-4 py-8">
@@ -64,10 +66,8 @@ export default function ProfilePage() {
         </p>
         <h1 className="mt-1 font-display text-3xl">{name}</h1>
         <p className="text-sm text-pa-muted">{city}</p>
-        {type === 'pet_parent' && (
-          <p className="mt-3 text-sm">
-            🐶 Bruno · 🐱 Luna
-          </p>
+        {mine?.redfaceMerchantId && (
+          <p className="mt-2 text-xs text-pa-forest">RedFace Pay merchant connected</p>
         )}
         <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-wider text-pa-muted">
           <span>Posts</span>
@@ -82,18 +82,19 @@ export default function ProfilePage() {
           Purchases & cart
         </Link>
         <Link to="/donate/p-cape" className="card p-4 font-semibold">
-          Your donations
+          Donate via RedFace Pay
         </Link>
         {type === 'merchant' && (
           <button
             type="button"
             className="card p-4 text-left font-semibold"
             onClick={() =>
-              beginPay({
+              void checkoutWithRedFacePay({
                 amountZar: 299,
                 label: 'Pet Angels Business subscription',
                 kind: 'subscription',
                 returnPath: '/profile?plan=business',
+                payerId: user?.id,
               })
             }
           >

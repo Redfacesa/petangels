@@ -69,3 +69,13 @@ export type CartItem = {
   productId: string;
   qty: number;
 };
+
+export type PayKind =
+  | 'product'
+  | 'service'
+  | 'donation'
+  | 'sponsorship'
+  | 'adoption'
+  | 'fundraiser'
+  | 'featured'
+  | 'subscription';

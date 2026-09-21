@@ -1,23 +1,42 @@
-import { FormEvent } from 'react';
+import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { buildMerchantSignupUrl, beginPay } from '../lib/redface-pay';
+import { buildMerchantSignupUrl, checkoutWithRedFacePay } from '../lib/redface-pay';
 import { saveLocalProfile } from '../lib/store';
+import { useAuth } from '../contexts/AuthContext';
+import { upsertMyProfile } from '../lib/db';
 
 export default function JoinBusinessPage() {
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  const { user } = useAuth();
+  const [saved, setSaved] = useState(false);
+
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const business = String(fd.get('business') || 'My pet store');
+    const city = String(fd.get('city') || 'Cape Town');
+    const merchantId = String(fd.get('merchant_id') || '').trim();
+    const handle = business.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 18);
     saveLocalProfile({
-      displayName: String(fd.get('business') || 'My pet store'),
-      handle: String(fd.get('business') || 'shop')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '')
-        .slice(0, 18),
-      city: String(fd.get('city') || 'Cape Town'),
+      displayName: business,
+      handle,
+      city,
       accountType: 'merchant',
-      businessName: String(fd.get('business') || ''),
+      businessName: business,
     });
-    window.location.href = buildMerchantSignupUrl();
+    if (user) {
+      await upsertMyProfile({
+        userId: user.id,
+        handle,
+        name: business,
+        accountType: 'merchant',
+        city,
+        redfaceMerchantId: merchantId || undefined,
+      });
+      setSaved(true);
+    }
+    if (!merchantId) {
+      window.location.href = buildMerchantSignupUrl();
+    }
   }
 
   return (
@@ -25,8 +44,8 @@ export default function JoinBusinessPage() {
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Merchants</p>
       <h1 className="mt-1 font-display text-3xl">Sell on Pet Angels</h1>
       <p className="mt-3 text-sm text-pa-muted">
-        Register your store or service. Checkout uses your RedFace Pay merchant link — the same rails as
-        the rest of the RedFace ecosystem. Pet Angels takes a platform fee on facilitated sales.
+        Your store lives on Pet Angels. Customers pay on RedFace Pay using your merchant link. Pet Angels
+        records the sale and can take a platform fee.
       </p>
 
       <div className="mt-6 grid gap-3 md:grid-cols-2">
@@ -49,11 +68,12 @@ export default function JoinBusinessPage() {
             type="button"
             className="btn-primary mt-4 w-full"
             onClick={() =>
-              beginPay({
+              void checkoutWithRedFacePay({
                 amountZar: 299,
                 label: 'Pet Angels Business',
                 kind: 'subscription',
                 returnPath: '/profile?plan=business',
+                payerId: user?.id,
               })
             }
           >
@@ -62,7 +82,7 @@ export default function JoinBusinessPage() {
         </div>
       </div>
 
-      <form className="mt-8 space-y-4" onSubmit={onSubmit}>
+      <form className="mt-8 space-y-4" onSubmit={(e) => void onSubmit(e)}>
         <div>
           <label className="label" htmlFor="business">
             Business name
@@ -75,8 +95,20 @@ export default function JoinBusinessPage() {
           </label>
           <input id="city" name="city" className="input" defaultValue="Cape Town" />
         </div>
+        <div>
+          <label className="label" htmlFor="merchant_id">
+            RedFace Pay merchant ID
+          </label>
+          <input
+            id="merchant_id"
+            name="merchant_id"
+            className="input"
+            placeholder="Paste after you sign up on RedFace Pay"
+          />
+        </div>
+        {saved && <p className="text-sm text-pa-forest">Store saved. Listings will check out on that merchant link.</p>}
         <button className="btn-primary w-full" type="submit">
-          Sign up on RedFace Pay
+          Save and open RedFace Pay signup
         </button>
       </form>
       <p className="mt-4 text-center text-sm">

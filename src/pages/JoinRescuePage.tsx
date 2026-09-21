@@ -2,24 +2,38 @@ import { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { saveLocalProfile } from '../lib/store';
 import { buildMerchantSignupUrl } from '../lib/redface-pay';
+import { useAuth } from '../contexts/AuthContext';
+import { upsertMyProfile } from '../lib/db';
 
 export default function JoinRescuePage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const org = String(fd.get('org') || 'Rescue');
+    const city = String(fd.get('city') || 'Cape Town');
+    const handle = org.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 18);
+    const merchantId = String(fd.get('merchant_id') || '').trim();
     saveLocalProfile({
-      displayName: String(fd.get('org') || 'Rescue'),
-      handle: String(fd.get('org') || 'rescue')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '')
-        .slice(0, 18),
-      city: String(fd.get('city') || 'Cape Town'),
+      displayName: org,
+      handle,
+      city,
       accountType: 'shelter',
     });
+    if (user) {
+      await upsertMyProfile({
+        userId: user.id,
+        handle,
+        name: org,
+        accountType: 'shelter',
+        city,
+        redfaceMerchantId: merchantId || undefined,
+      });
+    }
     const pay = fd.get('connect_pay') === 'on';
-    if (pay) {
+    if (pay && !merchantId) {
       window.location.href = buildMerchantSignupUrl();
       return;
     }
@@ -34,7 +48,7 @@ export default function JoinRescuePage() {
         Verified shelters list animals, run cases, share stories, and collect donations and adoption-related
         fees through RedFace Pay. Animal listings stay behind welfare rules — not an open classifieds board.
       </p>
-      <form className="mt-8 space-y-4" onSubmit={onSubmit}>
+      <form className="mt-8 space-y-4" onSubmit={(e) => void onSubmit(e)}>
         <div>
           <label className="label" htmlFor="org">
             Organisation name
@@ -47,9 +61,15 @@ export default function JoinRescuePage() {
           </label>
           <input id="city" name="city" className="input" defaultValue="Cape Town" />
         </div>
+        <div>
+          <label className="label" htmlFor="merchant_id">
+            RedFace Pay merchant ID (for donations)
+          </label>
+          <input id="merchant_id" name="merchant_id" className="input" />
+        </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="connect_pay" defaultChecked />
-          Connect RedFace Pay for donations
+          Open RedFace Pay if I do not have a merchant ID yet
         </label>
         <button className="btn-primary w-full" type="submit">
           Submit verification request
