@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { findAnimal, findPet, findProduct, findProfile, loadCatalog, emptyCatalog, type Catalog } from '../lib/db';
+import { findAnimal, findArticle, findPet, findProduct, findProfile, loadCatalog, emptyCatalog, type Catalog } from '../lib/db';
 
 type CatalogValue = Catalog & {
   loading: boolean;
@@ -8,6 +8,7 @@ type CatalogValue = Catalog & {
   productById: (id: string) => ReturnType<typeof findProduct>;
   animalById: (id: string) => ReturnType<typeof findAnimal>;
   petById: (id: string) => ReturnType<typeof findPet>;
+  articleById: (id: string) => ReturnType<typeof findArticle>;
 };
 
 const CatalogContext = createContext<CatalogValue | null>(null);
@@ -34,6 +35,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       productById: (id) => findProduct(catalog, id),
       animalById: (id) => findAnimal(catalog, id),
       petById: (id) => findPet(catalog, id),
+      articleById: (id) => findArticle(catalog, id),
     }),
     [catalog, loading],
   );

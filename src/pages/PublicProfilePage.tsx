@@ -10,7 +10,7 @@ import { checkoutWithRedFacePay } from '../lib/redface-pay';
 export default function PublicProfilePage() {
   const { handle } = useParams();
   const { user } = useAuth();
-  const { posts, products, pets, profileById } = useCatalog();
+  const { posts, products, pets, articles, profileById } = useCatalog();
   const [shop, setShop] = useState<'products' | 'services' | 'about' | 'pets'>('products');
   const profile = handle ? profileById(handle) : undefined;
   if (!profile) return <p className="p-8 text-center text-pa-muted">Profile not found.</p>;
@@ -19,6 +19,7 @@ export default function PublicProfilePage() {
   const theirProducts = products.filter((p) => p.sellerId === profile.id && p.kind === 'product');
   const theirServices = products.filter((p) => p.sellerId === profile.id && p.kind === 'service');
   const theirPets = pets.filter((p) => p.ownerId === profile.id);
+  const theirArticles = articles.filter((a) => a.authorId === profile.id);
   const isShop = profile.type === 'merchant' || theirProducts.length + theirServices.length > 0;
   const role =
     profile.type === 'shelter'
@@ -116,6 +117,20 @@ export default function PublicProfilePage() {
               <Link key={p.id} to={`/pets/${p.id}`} className="card overflow-hidden">
                 {p.photo ? <img src={p.photo} alt="" className="h-32 w-full object-cover" /> : null}
                 <p className="p-3 font-semibold">{p.name}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {theirArticles.length > 0 && (
+        <section className="mt-8">
+          <h2 className="font-display text-xl">Journal</h2>
+          <div className="mt-3 space-y-3">
+            {theirArticles.map((a) => (
+              <Link key={a.id} to={`/journal/${a.id}`} className="card block p-4">
+                <p className="font-semibold">{a.title}</p>
+                <p className="mt-1 text-sm text-pa-muted">{a.excerpt}</p>
               </Link>
             ))}
           </div>

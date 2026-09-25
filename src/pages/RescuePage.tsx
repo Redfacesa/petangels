@@ -21,7 +21,7 @@ export default function RescuePage() {
           Rescue case
         </Link>
         <Link to="/map" className="btn-ghost">
-          Shelter map (curated)
+          Shelter map
         </Link>
       </div>
 

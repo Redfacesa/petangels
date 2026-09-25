@@ -6,6 +6,7 @@ const groups = [
     items: [
       { to: '/create?type=story', title: 'Share a story', hint: 'About a pet, tagged to their profile' },
       { to: '/create?type=pet', title: 'Add a pet', hint: 'Name, photo, species — first-class profile' },
+      { to: '/create?type=article', title: 'Write an article', hint: 'Guides and stories about animals' },
     ],
   },
   {

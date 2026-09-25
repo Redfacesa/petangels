@@ -1,10 +1,10 @@
 import { FormEvent, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCatalog } from '../contexts/CatalogContext';
 import { loadLocalProfile } from '../lib/store';
 import { checkoutWithRedFacePay } from '../lib/redface-pay';
-import { insertAnimal, insertCareOffer, insertListing, insertPet, insertPost, insertRescueCase } from '../lib/db';
+import { insertCareOffer, insertListing, insertPet, insertPost, insertRescueCase, insertArticle } from '../lib/db';
 import { uploadPetImage } from '../lib/media';
 import type { ContentLane, Pet, PostKind } from '../lib/types';
 
@@ -19,10 +19,12 @@ const titles: Record<string, string> = {
   care: 'Offer pet care',
   animal: 'Adoption / rehome listing',
   fundraiser: 'Start a fundraiser',
+  article: 'Write an article',
 };
 
 export default function CreatePage() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const type = params.get('type') || 'story';
   const { user } = useAuth();
   const { refresh, profileById, pets } = useCatalog();
@@ -44,6 +46,7 @@ export default function CreatePage() {
     if (type === 'lost' || type === 'found') return 'Lost & found is a community lane, not a shop listing.';
     if (type === 'care') return 'Walk, sit, overnight. Request → accept comes next. Checkout stays on the seller pay URL.';
     if (type === 'product' || type === 'service') return 'Products and services only. Animals cannot be sold here.';
+    if (type === 'article') return 'Longer than a feed post. Welfare, care, and stories about animals.';
     return 'Community stories. Tag a pet so the feed says “Max’s story”, not only your name.';
   }, [type]);
 
@@ -71,6 +74,19 @@ export default function CreatePage() {
           payeeProfileId: authorId,
           merchantId: myProfile?.redfaceMerchantId,
         });
+        return;
+      }
+
+      if (type === 'article') {
+        const article = await insertArticle({
+          authorId,
+          title,
+          body,
+          excerpt: String(fd.get('excerpt') || ''),
+          coverUrl: imageUrl,
+        });
+        await refresh();
+        navigate(`/journal/${article.id}`);
         return;
       }
 
@@ -242,10 +258,18 @@ export default function CreatePage() {
         )}
         <div>
           <label className="label" htmlFor="body">
-            Details
+            {type === 'article' ? 'Article' : 'Details'}
           </label>
-          <textarea id="body" name="body" className="input min-h-32 rounded-2xl" required />
+          <textarea id="body" name="body" className={`input rounded-2xl ${type === 'article' ? 'min-h-56' : 'min-h-32'}`} required />
         </div>
+        {type === 'article' && (
+          <div>
+            <label className="label" htmlFor="excerpt">
+              Short intro (optional)
+            </label>
+            <input id="excerpt" name="excerpt" className="input" placeholder="One or two lines for the journal list" />
+          </div>
+        )}
         <div>
           <label className="label" htmlFor="image">
             Photo

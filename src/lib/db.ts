@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import type {
   AnimalListing,
+  Article,
   CareOffer,
   ContentLane,
   Pet,
@@ -158,6 +159,18 @@ function mapCareOffer(row: Record<string, unknown>): CareOffer {
   };
 }
 
+function mapArticle(row: Record<string, unknown>): Article {
+  return {
+    id: String(row.id),
+    authorId: String(row.author_id),
+    title: String(row.title),
+    excerpt: String(row.excerpt || ''),
+    body: String(row.body || ''),
+    cover: publicMediaUrl(String(row.cover_url || '')),
+    createdAt: String(row.created_at),
+  };
+}
+
 export type Catalog = {
   profiles: Profile[];
   posts: Post[];
@@ -166,6 +179,7 @@ export type Catalog = {
   cases: RescueCase[];
   pets: Pet[];
   careOffers: CareOffer[];
+  articles: Article[];
   remote: boolean;
 };
 
@@ -177,12 +191,13 @@ export const emptyCatalog: Catalog = {
   cases: [],
   pets: [],
   careOffers: [],
+  articles: [],
   remote: false,
 };
 
 export async function loadCatalog(): Promise<Catalog> {
   if (!supabase) return emptyCatalog;
-  const [profiles, posts, listings, animals, cases, pets, care] = await Promise.all([
+  const [profiles, posts, listings, animals, cases, pets, care, articles] = await Promise.all([
     supabase
       .from('pa_profiles')
       .select(
@@ -194,6 +209,7 @@ export async function loadCatalog(): Promise<Catalog> {
     supabase.from('pa_cases').select('*').order('created_at', { ascending: false }),
     supabase.from('pa_pets_public').select('*').order('created_at', { ascending: false }),
     supabase.from('pa_care_offers').select('*').eq('active', true),
+    supabase.from('pa_articles').select('*').order('created_at', { ascending: false }),
   ]);
   if (profiles.error) {
     const retry = await supabase
@@ -207,6 +223,9 @@ export async function loadCatalog(): Promise<Catalog> {
       products: (listings.data || []).map((row) => mapProduct(row as Record<string, unknown>)),
       animals: (animals.data || []).map((row) => mapAnimal(row as Record<string, unknown>)),
       cases: (cases.data || []).map((row) => mapCase(row as Record<string, unknown>)),
+      pets: pets.error ? [] : (pets.data || []).map((row) => mapPet(row as Record<string, unknown>)),
+      careOffers: care.error ? [] : (care.data || []).map((row) => mapCareOffer(row as Record<string, unknown>)),
+      articles: articles.error ? [] : (articles.data || []).map((row) => mapArticle(row as Record<string, unknown>)),
       remote: true,
     };
   }
@@ -235,6 +254,7 @@ export async function loadCatalog(): Promise<Catalog> {
     cases: (cases.data || []).map((row) => mapCase(row as Record<string, unknown>)),
     pets: mappedPets,
     careOffers: care.error ? [] : (care.data || []).map((row) => mapCareOffer(row as Record<string, unknown>)),
+    articles: articles.error ? [] : (articles.data || []).map((row) => mapArticle(row as Record<string, unknown>)),
     remote: true,
   };
 }
@@ -254,6 +274,10 @@ export function findAnimal(catalog: Catalog, id: string) {
 
 export function findPet(catalog: Catalog, id: string) {
   return catalog.pets.find((p) => p.id === id);
+}
+
+export function findArticle(catalog: Catalog, id: string) {
+  return catalog.articles.find((a) => a.id === id);
 }
 
 export function parseSubaccountInput(raw: string) {
@@ -421,6 +445,30 @@ export async function insertPost(row: {
     .single();
   if (error) throw error;
   return mapPost(data as Record<string, unknown>);
+}
+
+export async function insertArticle(row: {
+  authorId: string;
+  title: string;
+  body: string;
+  excerpt?: string;
+  coverUrl?: string;
+}) {
+  if (!supabase) throw new Error('Database not configured');
+  const excerpt = (row.excerpt || row.body).slice(0, 220);
+  const { data, error } = await supabase
+    .from('pa_articles')
+    .insert({
+      author_id: row.authorId,
+      title: row.title,
+      body: row.body,
+      excerpt,
+      cover_url: row.coverUrl || null,
+    })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return mapArticle(data as Record<string, unknown>);
 }
 
 export async function insertPet(row: {

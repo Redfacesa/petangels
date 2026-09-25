@@ -9,6 +9,8 @@ import { useAuth } from '../contexts/AuthContext';
 const desktopNav = [
   { to: '/home', label: 'Home' },
   { to: '/discover', label: 'Discover' },
+  { to: '/map', label: 'Shelters' },
+  { to: '/journal', label: 'Journal' },
   { to: '/marketplace', label: 'Marketplace' },
   { to: '/rescue', label: 'Rescue' },
 ];
@@ -83,6 +85,10 @@ export default function AppShell() {
           <a className="font-semibold text-pa-forest" href="https://www.redfacepay.co.za" target="_blank" rel="noreferrer">
             RedFace Pay
           </a>
+          {' · '}
+          <Link to="/map">Shelter map</Link>
+          {' · '}
+          <Link to="/journal">Journal</Link>
           {' · '}
           <Link to="/legal">Welfare & marketplace rules</Link>
         </footer>

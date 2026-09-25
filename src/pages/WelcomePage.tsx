@@ -92,12 +92,21 @@ export default function WelcomePage() {
             <li>Home feed of stories, recoveries and adoptions</li>
             <li>Marketplace for products and services</li>
             <li>Care near you — walk, sit, babysit</li>
-            <li>Rescue cases and the national Shelter Map</li>
+            <li>Rescue cases and the live Shelter Map</li>
+            <li>Journal — articles about animals</li>
             <li>Your profile, animals, orders and donations</li>
           </ul>
-          <Link to="/signup" className="btn-primary mt-8 w-fit">
-            Create an account to enter
-          </Link>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link to="/signup" className="btn-primary w-fit">
+              Create an account to enter
+            </Link>
+            <Link to="/map" className="rounded-full border border-pa-forest px-6 py-3 text-sm font-semibold text-pa-forest">
+              Find shelters
+            </Link>
+            <Link to="/journal" className="rounded-full border border-pa-forest px-6 py-3 text-sm font-semibold text-pa-forest">
+              Animal journal
+            </Link>
+          </div>
         </div>
       </section>
 

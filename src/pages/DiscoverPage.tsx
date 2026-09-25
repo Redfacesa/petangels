@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useCatalog } from '../contexts/CatalogContext';
 
 export default function DiscoverPage() {
-  const { profiles, animals, pets } = useCatalog();
+  const { profiles, animals, pets, articles } = useCatalog();
   const [q, setQ] = useState('');
   const needle = q.trim().toLowerCase();
   const people = profiles.filter((p) => p.type === 'pet_parent');
@@ -17,8 +17,9 @@ export default function DiscoverPage() {
     return {
       people: profiles.filter((p) => `${p.name} ${p.handle} ${p.city} ${p.bio}`.toLowerCase().includes(needle)),
       pets: pets.filter((p) => `${p.name} ${p.breed} ${p.city} ${p.about}`.toLowerCase().includes(needle)),
+      articles: articles.filter((a) => `${a.title} ${a.excerpt} ${a.body}`.toLowerCase().includes(needle)),
     };
-  }, [needle, profiles, pets]);
+  }, [needle, profiles, pets, articles]);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
@@ -32,7 +33,10 @@ export default function DiscoverPage() {
       />
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <Link to="/map" className="card p-4 font-semibold text-pa-forest">
-          Open the Shelter Map
+          Shelter map — live
+        </Link>
+        <Link to="/journal" className="card p-4 font-semibold text-pa-forest">
+          Animal journal
         </Link>
         <Link to="/rescue#lost" className="card p-4 font-semibold text-pa-forest">
           Lost & found
@@ -41,7 +45,7 @@ export default function DiscoverPage() {
 
       {hits && (
         <Section title={`Results for “${q.trim()}”`}>
-          {hits.pets.length === 0 && hits.people.length === 0 ? (
+          {hits.pets.length === 0 && hits.people.length === 0 && hits.articles.length === 0 ? (
             <p className="text-sm text-pa-muted">Nothing matched.</p>
           ) : (
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -55,6 +59,12 @@ export default function DiscoverPage() {
                 <Link key={p.id} to={`/u/${p.handle}`} className="card p-3">
                   <p className="font-semibold">{p.name}</p>
                   <p className="text-xs text-pa-muted">{p.city}</p>
+                </Link>
+              ))}
+              {hits.articles.map((a) => (
+                <Link key={a.id} to={`/journal/${a.id}`} className="card p-3">
+                  <p className="text-[10px] font-bold uppercase text-pa-forest">Journal</p>
+                  <p className="font-semibold">{a.title}</p>
                 </Link>
               ))}
             </div>

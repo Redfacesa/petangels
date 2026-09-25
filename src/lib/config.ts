@@ -11,7 +11,7 @@ export const PLATFORM_MERCHANT_ID = (import.meta.env.VITE_PET_ANGELS_MERCHANT_ID
 
 export const STORAGE_BUCKET = import.meta.env.VITE_STORAGE_BUCKET || 'petimages';
 
-export const ADSENSE_CLIENT = (import.meta.env.VITE_ADSENSE_CLIENT || '').trim();
+export const ADSENSE_CLIENT = (import.meta.env.VITE_ADSENSE_CLIENT || 'ca-pub-5404460804585956').trim();
 export const ADSENSE_SLOT_RAIL = (import.meta.env.VITE_ADSENSE_SLOT_RAIL || '').trim();
 export const ADSENSE_SLOT_WRAP = (import.meta.env.VITE_ADSENSE_SLOT_WRAP || '').trim();
 

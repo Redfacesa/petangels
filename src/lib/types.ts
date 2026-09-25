@@ -127,6 +127,16 @@ export type CareOffer = {
   photo: string;
 };
 
+export type Article = {
+  id: string;
+  authorId: string;
+  title: string;
+  excerpt: string;
+  body: string;
+  cover: string;
+  createdAt: string;
+};
+
 export type CartItem = {
   productId: string;
   qty: number;

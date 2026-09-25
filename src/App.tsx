@@ -24,6 +24,8 @@ import DonatePage from './pages/DonatePage';
 import LegalPage from './pages/LegalPage';
 import CarePage from './pages/CarePage';
 import ShelterMapPage from './pages/ShelterMapPage';
+import JournalPage from './pages/JournalPage';
+import ArticlePage from './pages/ArticlePage';
 import PetPage from './pages/PetPage';
 import AdminPage from './pages/AdminPage';
 import InboxPage from './pages/InboxPage';
@@ -50,7 +52,9 @@ export default function App() {
             <Route path="/marketplace" element={<Gate><MarketplacePage /></Gate>} />
             <Route path="/marketplace/:id" element={<Gate><ProductPage /></Gate>} />
             <Route path="/care" element={<Gate><CarePage /></Gate>} />
-            <Route path="/map" element={<Gate><ShelterMapPage /></Gate>} />
+            <Route path="/map" element={<ShelterMapPage />} />
+            <Route path="/journal" element={<JournalPage />} />
+            <Route path="/journal/:id" element={<ArticlePage />} />
             <Route path="/rescue" element={<Gate><RescuePage /></Gate>} />
             <Route path="/animals/:id" element={<Gate><AnimalPage /></Gate>} />
             <Route path="/pets/:id" element={<Gate><PetPage /></Gate>} />

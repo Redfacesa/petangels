@@ -6,11 +6,11 @@ import type { ContentLane } from '../lib/types';
 
 const actions = [
   { to: '/create?type=story', label: 'Share a story' },
-  { to: '/discover', label: 'Find a pet' },
+  { to: '/map', label: 'Find a shelter' },
+  { to: '/journal', label: 'Read journal' },
   { to: '/rescue', label: 'Adopt' },
   { to: '/marketplace', label: 'Shop' },
   { to: '/care', label: 'Find care' },
-  { to: '/rescue', label: 'Support a rescue' },
 ];
 
 export default function HomePage() {
