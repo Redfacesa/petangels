@@ -482,6 +482,59 @@ export async function likePost(postId: string, userId: string) {
   await supabase.from('pa_likes').insert({ post_id: postId, user_id: userId });
 }
 
+export type FeedComment = {
+  id: string;
+  postId: string;
+  authorId: string;
+  parentId?: string;
+  body: string;
+  createdAt: string;
+};
+
+function mapComment(row: Record<string, unknown>): FeedComment {
+  return {
+    id: String(row.id),
+    postId: String(row.post_id),
+    authorId: String(row.author_id),
+    parentId: row.parent_id ? String(row.parent_id) : undefined,
+    body: String(row.body || ''),
+    createdAt: String(row.created_at),
+  };
+}
+
+export async function loadComments(postId: string): Promise<FeedComment[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('pa_comments')
+    .select('id, post_id, author_id, parent_id, body, created_at')
+    .eq('post_id', postId)
+    .order('created_at', { ascending: true })
+    .limit(200);
+  if (error) throw error;
+  return (data || []).map((row) => mapComment(row as Record<string, unknown>));
+}
+
+export async function insertComment(input: {
+  postId: string;
+  authorId: string;
+  body: string;
+  parentId?: string;
+}) {
+  if (!supabase) throw new Error('Database not configured');
+  const { data, error } = await supabase
+    .from('pa_comments')
+    .insert({
+      post_id: input.postId,
+      author_id: input.authorId,
+      parent_id: input.parentId || null,
+      body: input.body.trim(),
+    })
+    .select('id, post_id, author_id, parent_id, body, created_at')
+    .single();
+  if (error) throw error;
+  return mapComment(data as Record<string, unknown>);
+}
+
 export async function reportContent(input: {
   reporterId: string;
   targetKind: string;

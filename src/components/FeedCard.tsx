@@ -5,6 +5,7 @@ import { likePost } from '../lib/db';
 import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
 import ReportControl from './ReportControl';
+import CommentThread from './CommentThread';
 
 const laneLabel: Record<Post['lane'], string> = {
   community: 'Community',
@@ -77,6 +78,7 @@ export default function FeedCard({ post }: { post: Post }) {
           ))}
           <ReportControl reporterId={user?.id} targetKind="post" targetId={post.id} />
         </div>
+        <CommentThread postId={post.id} count={post.comments} />
       </div>
     </article>
   );
