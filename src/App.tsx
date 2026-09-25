@@ -1,7 +1,9 @@
+import type { ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CatalogProvider } from './contexts/CatalogContext';
 import AppShell from './components/AppShell';
+import RequireAuth from './components/RequireAuth';
 import WelcomePage from './pages/WelcomePage';
 import HomePage from './pages/HomePage';
 import DiscoverPage from './pages/DiscoverPage';
@@ -23,6 +25,10 @@ import LegalPage from './pages/LegalPage';
 import CarePage from './pages/CarePage';
 import ShelterMapPage from './pages/ShelterMapPage';
 
+function Gate({ children }: { children: ReactNode }) {
+  return <RequireAuth>{children}</RequireAuth>;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -31,25 +37,26 @@ export default function App() {
         <Routes>
           <Route element={<AppShell />}>
             <Route path="/" element={<WelcomePage />} />
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/discover" element={<DiscoverPage />} />
-            <Route path="/marketplace" element={<MarketplacePage />} />
-            <Route path="/marketplace/:id" element={<ProductPage />} />
-            <Route path="/care" element={<CarePage />} />
-            <Route path="/map" element={<ShelterMapPage />} />
-            <Route path="/rescue" element={<RescuePage />} />
-            <Route path="/animals/:id" element={<AnimalPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/u/:handle" element={<PublicProfilePage />} />
-            <Route path="/signup" element={<SignupPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
-            <Route path="/join/business" element={<JoinBusinessPage />} />
-            <Route path="/join/rescue" element={<JoinRescuePage />} />
-            <Route path="/create" element={<CreatePage />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/donate/:orgId" element={<DonatePage />} />
             <Route path="/legal" element={<LegalPage />} />
+
+            <Route path="/home" element={<Gate><HomePage /></Gate>} />
+            <Route path="/discover" element={<Gate><DiscoverPage /></Gate>} />
+            <Route path="/marketplace" element={<Gate><MarketplacePage /></Gate>} />
+            <Route path="/marketplace/:id" element={<Gate><ProductPage /></Gate>} />
+            <Route path="/care" element={<Gate><CarePage /></Gate>} />
+            <Route path="/map" element={<Gate><ShelterMapPage /></Gate>} />
+            <Route path="/rescue" element={<Gate><RescuePage /></Gate>} />
+            <Route path="/animals/:id" element={<Gate><AnimalPage /></Gate>} />
+            <Route path="/profile" element={<Gate><ProfilePage /></Gate>} />
+            <Route path="/u/:handle" element={<Gate><PublicProfilePage /></Gate>} />
+            <Route path="/join/business" element={<Gate><JoinBusinessPage /></Gate>} />
+            <Route path="/join/rescue" element={<Gate><JoinRescuePage /></Gate>} />
+            <Route path="/create" element={<Gate><CreatePage /></Gate>} />
+            <Route path="/cart" element={<Gate><CartPage /></Gate>} />
+            <Route path="/donate/:orgId" element={<Gate><DonatePage /></Gate>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

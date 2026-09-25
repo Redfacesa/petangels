@@ -1,4 +1,4 @@
-export const SITE_HOST = 'www.petangelssa.co.za';
+export const SITE_HOST = 'app.petangelssa.co.za';
 export const CANONICAL_SITE_URL = `https://${SITE_HOST}`;
 
 export const ECOSYSTEM_FROM = 'pet-angels';

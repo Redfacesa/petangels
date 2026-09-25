@@ -1,6 +1,6 @@
 # Pet Angels SA
 
-Site: [www.petangelssa.co.za](https://www.petangelssa.co.za)
+Site: [app.petangelssa.co.za](https://app.petangelssa.co.za)
 
 Vertical social-commerce for the animal ecosystem: community + marketplace + rescue/adoption + nearby pet care + Shelter Map + payments.
 
@@ -53,7 +53,7 @@ VITE_REDFACE_PAY_URL=https://www.redfacepay.co.za
 VITE_PET_ANGELS_MERCHANT_ID=eafa2e20-f007-4544-9105-d4ed550f750a
 VITE_PET_ANGELS_PAYSTACK_SHOP=https://paystack.shop/pay/vt_nqvjnu3f
 VITE_PET_ANGELS_PAYSTACK_TERMINAL=vt_nqvjnu3f
-VITE_SITE_URL=https://www.petangelssa.co.za
+VITE_SITE_URL=https://app.petangelssa.co.za
 VITE_REDFACE_SSO=0
 ```
 
@@ -89,7 +89,7 @@ Open `http://localhost:5174`.
 
 ## Domain
 
-Point `petangelssa.co.za` and `www.petangelssa.co.za` at the host (Vercel/Render). Set `VITE_SITE_URL=https://www.petangelssa.co.za`.
+Point `app.petangelssa.co.za` at the Vercel host. Set `VITE_SITE_URL=https://app.petangelssa.co.za`.
 
 ## Ads (AdSense-ready)
 

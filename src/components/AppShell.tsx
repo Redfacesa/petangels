@@ -17,16 +17,21 @@ export default function AppShell() {
   const { user } = useAuth();
   const loc = useLocation();
   const [createOpen, setCreateOpen] = useState(false);
-  const marketing = loc.pathname === '/';
+  const publicPage =
+    loc.pathname === '/' ||
+    loc.pathname.startsWith('/login') ||
+    loc.pathname.startsWith('/signup') ||
+    loc.pathname.startsWith('/legal') ||
+    loc.pathname.startsWith('/auth');
 
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-pa-sand/80 bg-pa-cream/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <Link to={marketing ? '/' : '/home'} aria-label="Pet Angels home">
+          <Link to={user ? '/home' : '/'} aria-label="Pet Angels home">
             <BrandMark size="sm" />
           </Link>
-          {!marketing && (
+          {!publicPage && (
             <nav className="hidden items-center gap-6 md:flex">
               {desktopNav.map((n) => (
                 <NavLink
@@ -62,14 +67,14 @@ export default function AppShell() {
           </div>
         </div>
       </header>
-      <main className={marketing ? '' : 'pb-nav'}>
-        {marketing ? <Outlet /> : <AdWrap><Outlet /></AdWrap>}
+      <main className={publicPage ? '' : 'pb-nav'}>
+        {publicPage ? <Outlet /> : <AdWrap><Outlet /></AdWrap>}
       </main>
       <BottomNav />
       <CreateSheet open={createOpen} onClose={() => setCreateOpen(false)} />
-      {!marketing && (
+      {!publicPage && (
         <footer className="hidden border-t border-pa-sand px-4 py-8 text-center text-xs text-pa-muted md:block">
-          Pet Angels SA · petangelssa.co.za · Payments by{' '}
+          Pet Angels SA · app.petangelssa.co.za · Payments by{' '}
           <a className="font-semibold text-pa-forest" href="https://www.redfacepay.co.za" target="_blank" rel="noreferrer">
             RedFace Pay
           </a>

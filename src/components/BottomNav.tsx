@@ -17,6 +17,7 @@ export default function BottomNav() {
     loc.pathname === '/' ||
     loc.pathname.startsWith('/login') ||
     loc.pathname.startsWith('/signup') ||
+    loc.pathname.startsWith('/legal') ||
     loc.pathname.startsWith('/join') ||
     loc.pathname.startsWith('/auth');
   if (hide) return null;

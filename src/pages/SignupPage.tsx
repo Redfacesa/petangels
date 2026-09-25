@@ -11,7 +11,8 @@ export default function SignupPage() {
   const { signUp, configured } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const type = (params.get('type') as AccountType) || 'pet_parent';
+  const raw = params.get('type');
+  const type: AccountType = raw === 'merchant' || raw === 'shelter' ? raw : 'pet_parent';
   const next = params.get('next') || '/home';
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -75,6 +76,26 @@ export default function SignupPage() {
             ? 'Rescue organisations get a verified profile here. Donations still settle on RedFace Pay.'
             : 'Pet parents get a profile, animals, stories, marketplace, and donations.'}
       </p>
+
+      <div className="mt-6 grid grid-cols-3 gap-2">
+        {(
+          [
+            ['pet_parent', 'User'],
+            ['merchant', 'Business'],
+            ['shelter', 'Shelter'],
+          ] as const
+        ).map(([id, label]) => (
+          <Link
+            key={id}
+            to={`/signup?type=${id}`}
+            className={`rounded-2xl border px-2 py-2 text-center text-xs font-semibold ${
+              type === id ? 'border-pa-forest bg-pa-forest text-white' : 'border-pa-sand bg-white text-pa-ink'
+            }`}
+          >
+            {label}
+          </Link>
+        ))}
+      </div>
 
       <form className="mt-8 space-y-4" onSubmit={(e) => void onSubmit(e)}>
         <div>
