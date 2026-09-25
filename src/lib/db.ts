@@ -135,6 +135,21 @@ export function findAnimal(catalog: Catalog, id: string) {
   return catalog.animals.find((a) => a.id === id);
 }
 
+export function parseSubaccountInput(raw: string) {
+  const t = raw.trim();
+  if (!t) return '';
+  try {
+    const u = new URL(t);
+    const fromPath = u.pathname.match(/\/pay\/([^/]+)/);
+    if (fromPath?.[1]) return decodeURIComponent(fromPath[1]);
+  } catch {
+    /* pasted id, not a URL */
+  }
+  const tail = t.match(/\/pay\/([^/?#]+)/);
+  if (tail?.[1]) return decodeURIComponent(tail[1]);
+  return t;
+}
+
 export async function upsertMyProfile(input: {
   userId: string;
   handle: string;
@@ -144,8 +159,8 @@ export async function upsertMyProfile(input: {
   bio?: string;
   avatarUrl?: string;
 }) {
-  if (!supabase) return;
-  await supabase.from('pa_profiles').upsert({
+  if (!supabase) throw new Error('Database not configured');
+  const row: Record<string, unknown> = {
     id: input.userId,
     auth_user_id: input.userId,
     handle: input.handle,
@@ -153,8 +168,10 @@ export async function upsertMyProfile(input: {
     account_type: input.accountType,
     city: input.city || '',
     bio: input.bio || '',
-    avatar_url: input.avatarUrl || undefined,
-  });
+  };
+  if (input.avatarUrl) row.avatar_url = input.avatarUrl;
+  const { error } = await supabase.from('pa_profiles').upsert(row);
+  if (error) throw error;
 }
 
 export type PayoutAccount = {
@@ -192,6 +209,18 @@ export async function saveMyPayout(profileId: string, input: Omit<PayoutAccount,
     { onConflict: 'profile_id' },
   );
   if (error) throw error;
+}
+
+export async function saveMySubaccount(profileId: string, raw: string) {
+  if (!supabase) throw new Error('Database not configured');
+  const merchantId = parseSubaccountInput(raw);
+  if (!merchantId) throw new Error('Paste a RedFace subaccount id or pay URL');
+  const { error } = await supabase
+    .from('pa_profiles')
+    .update({ redface_merchant_id: merchantId })
+    .eq('id', profileId);
+  if (error) throw error;
+  return merchantId;
 }
 
 export type PayReceipt = {

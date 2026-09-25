@@ -44,13 +44,17 @@ export default function SignupPage() {
       }
       const { data } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
       if (data.user) {
-        await upsertMyProfile({
-          userId: data.user.id,
-          handle,
-          name,
-          accountType: type,
-          city,
-        });
+        try {
+          await upsertMyProfile({
+            userId: data.user.id,
+            handle,
+            name,
+            accountType: type,
+            city,
+          });
+        } catch {
+          /* trigger may already have created the profile */
+        }
       }
     }
     setLoading(false);

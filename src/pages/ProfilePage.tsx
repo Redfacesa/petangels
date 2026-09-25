@@ -2,20 +2,24 @@ import { FormEvent, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCatalog } from '../contexts/CatalogContext';
-import { checkoutWithRedFacePay, REDFACE_PAY_URL } from '../lib/redface-pay';
+import { checkoutWithRedFacePay } from '../lib/redface-pay';
+import { REDFACE_PAY_URL, zar } from '../lib/config';
 import {
+  insertListing,
   loadMyPayout,
   loadMyReceipts,
   loadMySales,
   saveMyPayout,
+  saveMySubaccount,
   upsertMyProfile,
   type PayReceipt,
   type PayoutAccount,
 } from '../lib/db';
 import { uploadPetImage } from '../lib/media';
-import { zar } from '../lib/config';
 import FeedCard from '../components/FeedCard';
 import ProductCard from '../components/ProductCard';
+
+type Tab = 'posts' | 'animals' | 'market' | 'donations' | 'purchases' | 'payout';
 
 export default function ProfilePage() {
   const { user, signOut, loading } = useAuth();
@@ -23,11 +27,14 @@ export default function ProfilePage() {
   const [params] = useSearchParams();
   const paid = params.get('paid') === '1';
   const mine = user ? profileById(user.id) : undefined;
-  const [tab, setTab] = useState<'posts' | 'selling' | 'bought' | 'animals' | 'payout'>('posts');
+  const initialTab = (params.get('tab') as Tab) || 'posts';
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [payout, setPayout] = useState<PayoutAccount | null>(null);
   const [bought, setBought] = useState<PayReceipt[]>([]);
   const [sales, setSales] = useState<PayReceipt[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -42,31 +49,50 @@ export default function ProfilePage() {
   const name = mine?.name || user.user_metadata?.full_name || 'Pet Angel';
   const type = mine?.type || (user.user_metadata?.account_type as string) || 'pet_parent';
   const city = mine?.city || '';
+  const handle = mine?.handle || user.email?.split('@')[0] || 'angel';
+  const accountType = (type as 'pet_parent' | 'merchant' | 'shelter') || 'pet_parent';
   const myPosts = posts.filter((p) => p.authorId === user.id);
   const myListings = products.filter((p) => p.sellerId === user.id);
   const myAnimals = animals.filter((a) => a.orgId === user.id);
-  const merchantLink = mine?.redfaceMerchantId
-    ? `${REDFACE_PAY_URL}/pay/${mine.redfaceMerchantId}`
-    : null;
+  const donationsIn = sales.filter((r) => r.kind === 'donation' || r.kind === 'sponsorship');
+  const donationsOut = bought.filter((r) => r.kind === 'donation' || r.kind === 'sponsorship');
+  const approved = payout?.status === 'issued';
+  const waiting = payout?.status === 'submitted';
+  const merchantId = mine?.redfaceMerchantId;
+  const merchantLink = merchantId ? `${REDFACE_PAY_URL}/pay/${merchantId}` : null;
 
-  async function onAvatar(file: File) {
-    const url = await uploadPetImage(user.id, file);
+  async function persistProfile(extra?: { avatarUrl?: string }) {
     await upsertMyProfile({
       userId: user.id,
-      handle: mine?.handle || user.email?.split('@')[0] || 'angel',
+      handle,
       name,
-      accountType: (type as 'pet_parent' | 'merchant' | 'shelter') || 'pet_parent',
+      accountType,
       city,
-      avatarUrl: url,
+      avatarUrl: extra?.avatarUrl,
     });
-    await refresh();
-    setMsg('Photo saved to petimages.');
+  }
+
+  async function onAvatar(file: File) {
+    setErr(null);
+    setPhotoBusy(true);
+    try {
+      const url = await uploadPetImage(user.id, file);
+      await persistProfile({ avatarUrl: url });
+      await refresh();
+      setMsg('Profile photo saved.');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Could not save photo.');
+    } finally {
+      setPhotoBusy(false);
+    }
   }
 
   async function onPayout(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setErr(null);
     const fd = new FormData(e.currentTarget);
     try {
+      await persistProfile();
       await saveMyPayout(user.id, {
         bankName: String(fd.get('bank_name') || ''),
         accountName: String(fd.get('account_name') || ''),
@@ -74,9 +100,48 @@ export default function ProfilePage() {
         branchCode: String(fd.get('branch_code') || ''),
       });
       setPayout(await loadMyPayout(user.id));
-      setMsg('Bank details submitted. An admin will issue your RedFace merchant / subaccount link.');
-    } catch {
-      setMsg('Could not save bank details. Paste the latest SQL on this project, then try again.');
+      setMsg('Bank details submitted. Status: waiting for approval.');
+      setTab('payout');
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Could not save bank details.');
+    }
+  }
+
+  async function onSubaccount(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErr(null);
+    const fd = new FormData(e.currentTarget);
+    try {
+      const id = await saveMySubaccount(user.id, String(fd.get('subaccount') || ''));
+      await refresh();
+      setMsg(`Pay URL ready: ${REDFACE_PAY_URL}/pay/${id}`);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Could not save subaccount.');
+    }
+  }
+
+  async function onSell(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErr(null);
+    const fd = new FormData(e.currentTarget);
+    const file = fd.get('image') as File | null;
+    try {
+      let imageUrl = '';
+      if (file && file.size > 0) imageUrl = await uploadPetImage(user.id, file);
+      await insertListing({
+        sellerId: user.id,
+        kind: String(fd.get('kind') || 'product') === 'service' ? 'service' : 'product',
+        title: String(fd.get('title') || ''),
+        price: Number(fd.get('price') || 0),
+        category: String(fd.get('kind') || 'product') === 'service' ? 'Services' : 'Pet accessories',
+        imageUrl,
+        city,
+      });
+      await refresh();
+      setMsg('Listing is on the marketplace. Buyers pay your RedFace URL once it is connected.');
+      (e.target as HTMLFormElement).reset();
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : 'Could not list this item.');
     }
   }
 
@@ -85,36 +150,55 @@ export default function ProfilePage() {
       {paid && (
         <p className="mb-4 rounded-2xl bg-pa-sage/30 px-4 py-3 text-sm text-pa-forest">Payment returned. Thank you.</p>
       )}
-      {msg && <p className="mb-4 text-sm text-pa-forest">{msg}</p>}
+      {msg && <p className="mb-3 text-sm text-pa-forest">{msg}</p>}
+      {err && <p className="mb-3 text-sm text-pa-rose">{err}</p>}
+
       <div className="card p-6">
         <div className="flex gap-4">
-          <label className="relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-full bg-pa-sand">
-            {mine?.avatar ? <img src={mine.avatar} alt="" className="h-full w-full object-cover" /> : null}
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void onAvatar(f);
-              }}
-            />
-          </label>
-          <div>
+          <div className="shrink-0">
+            <label className="relative flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-pa-sand ring-2 ring-pa-forest/20">
+              {mine?.avatar ? (
+                <img src={mine.avatar} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="px-2 text-center text-[11px] font-semibold text-pa-forest">Add photo</span>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void onAvatar(f);
+                }}
+              />
+            </label>
+            <p className="mt-2 text-center text-[11px] text-pa-muted">{photoBusy ? 'Saving…' : 'Tap to change'}</p>
+          </div>
+          <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.2em] text-pa-muted">
-              {type === 'merchant' ? 'Business' : type === 'shelter' ? 'Shelter' : 'Pet parent'}
+              {accountType === 'merchant' ? 'Business' : accountType === 'shelter' ? 'Shelter' : 'Pet parent'}
             </p>
             <h1 className="font-display text-3xl">{name}</h1>
-            <p className="text-sm text-pa-muted">{city}</p>
+            <p className="text-sm text-pa-muted">
+              @{handle}
+              {city ? ` · ${city}` : ''}
+            </p>
+            <button type="button" className="mt-3 text-sm font-semibold text-pa-forest" onClick={() => setTab('payout')}>
+              Bank & payouts
+            </button>
           </div>
         </div>
-        <p className="mt-3 text-xs text-pa-muted">Tap the circle to upload a photo (petimages bucket).</p>
-        {merchantLink ? (
-          <p className="mt-3 break-all text-xs text-pa-forest">Merchant link: {merchantLink}</p>
-        ) : (
-          <p className="mt-3 text-xs text-pa-muted">
-            No merchant / subaccount yet. Add bank details below — RedFace or Pet Angels admin issues the selling
-            link.
+
+        <PayoutBanner
+          waiting={waiting}
+          approved={approved}
+          hasLink={Boolean(merchantLink)}
+          onOpen={() => setTab('payout')}
+        />
+
+        {merchantLink && (
+          <p className="mt-3 break-all rounded-2xl bg-pa-sage/25 px-3 py-2 text-xs text-pa-forest">
+            Your pay URL: {merchantLink}
           </p>
         )}
       </div>
@@ -123,10 +207,11 @@ export default function ProfilePage() {
         {(
           [
             ['posts', 'Posts'],
-            ['selling', 'Selling'],
-            ['bought', 'Bought'],
             ['animals', 'Animals'],
-            ['payout', 'Bank'],
+            ['market', 'Marketplace'],
+            ['donations', 'Donations'],
+            ['purchases', 'Purchases & cart'],
+            ['payout', 'Bank & payouts'],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -142,50 +227,26 @@ export default function ProfilePage() {
 
       {tab === 'posts' && (
         <div className="mt-5 space-y-4">
+          <Link to="/create?type=story" className="btn-primary">
+            New post
+          </Link>
           {myPosts.length === 0 ? (
-            <p className="text-sm text-pa-muted">
-              No posts yet. <Link to="/create?type=story">Share a story</Link>
-            </p>
+            <p className="text-sm text-pa-muted">No posts yet.</p>
           ) : (
             myPosts.map((p) => <FeedCard key={p.id} post={p} />)
           )}
         </div>
       )}
 
-      {tab === 'selling' && (
-        <div className="mt-5">
-          <p className="text-xs text-pa-muted">Products and services only. Animals are adoption listings, not for sale.</p>
-          <Link to="/create?type=product" className="btn-primary mt-3">
-            List something to sell
-          </Link>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            {myListings.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-          <h3 className="mt-6 text-sm font-semibold">Incoming sales</h3>
-          <ReceiptList rows={sales} empty="No sales yet. Buyers pay your RedFace merchant link once admin issues it." />
-        </div>
-      )}
-
-      {tab === 'bought' && (
-        <div className="mt-5">
-          <Link to="/cart" className="text-sm font-semibold text-pa-forest">
-            Open cart
-          </Link>
-          <ReceiptList rows={bought} empty="You have not bought anything yet." />
-        </div>
-      )}
-
       {tab === 'animals' && (
         <div className="mt-5">
-          {type === 'shelter' ? (
+          {accountType === 'shelter' ? (
             <Link to="/create?type=animal" className="btn-primary">
               List an animal for adoption
             </Link>
           ) : (
             <p className="text-sm text-pa-muted">
-              Pet parents cannot sell animals. Shelters list adoption/rehome only.
+              Animals here are adoption/rehome only. Pet parents do not sell animals. Shelters list them.
             </p>
           )}
           <div className="mt-4 grid grid-cols-2 gap-3">
@@ -199,44 +260,192 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {tab === 'payout' && (
-        <form className="mt-5 space-y-3" onSubmit={(e) => void onPayout(e)}>
+      {tab === 'market' && (
+        <div className="mt-5">
           <p className="text-sm text-pa-muted">
-            Bank details stay private on Pet Angels. After review, admin puts your RedFace Pay merchant /
-            subaccount on this profile. That link is what buyers pay.
+            Upload a product or service photo and price. Checkout uses your RedFace pay URL after payout
+            approval. Not for selling animals.
           </p>
-          <input name="bank_name" className="input" placeholder="Bank name" defaultValue={payout?.bankName} required />
-          <input name="account_name" className="input" placeholder="Account name" defaultValue={payout?.accountName} required />
-          <input name="account_number" className="input" placeholder="Account number" defaultValue={payout?.accountNumber} required />
-          <input name="branch_code" className="input" placeholder="Branch code" defaultValue={payout?.branchCode} required />
-          <p className="text-xs text-pa-muted">Status: {payout?.status || 'not submitted'}</p>
-          <button className="btn-primary w-full" type="submit">
-            Save bank details
-          </button>
-        </form>
+          <form className="mt-4 space-y-3" onSubmit={(e) => void onSell(e)}>
+            <select name="kind" className="input">
+              <option value="product">Product</option>
+              <option value="service">Service (walk, sit, board)</option>
+            </select>
+            <input name="title" className="input" placeholder="What are you selling?" required />
+            <input name="price" type="number" min={1} className="input" placeholder="Price in rand" required />
+            <label className="label">Photo</label>
+            <input name="image" type="file" accept="image/*" className="text-sm" />
+            <button className="btn-primary w-full" type="submit">
+              Upload listing
+            </button>
+          </form>
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            {myListings.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+          <h3 className="mt-6 text-sm font-semibold">Sales to you</h3>
+          <ReceiptList rows={sales} empty="No sales yet." />
+        </div>
       )}
 
-      {type !== 'pet_parent' && (
-        <button
-          type="button"
-          className="mt-8 w-full text-left text-sm font-semibold text-pa-forest"
-          onClick={() =>
-            void checkoutWithRedFacePay({
-              amountZar: 299,
-              label: 'Pet Angels Business subscription',
-              kind: 'subscription',
-              returnPath: '/profile?plan=business',
-              payerId: user.id,
-            })
-          }
-        >
-          Pet Angels Business — R299
-        </button>
+      {tab === 'donations' && (
+        <div className="mt-5 space-y-4">
+          {merchantLink ? (
+            <p className="text-sm text-pa-muted">
+              People donate to you at your RedFace URL. Share: {merchantLink}
+            </p>
+          ) : (
+            <p className="text-sm text-pa-muted">
+              Your donate URL appears after bank approval and you paste your subaccount.
+            </p>
+          )}
+          <button
+            type="button"
+            className="btn-rose w-full"
+            onClick={() =>
+              void checkoutWithRedFacePay({
+                amountZar: 100,
+                label: 'Donation · Pet Angels',
+                kind: 'donation',
+                returnPath: '/profile?tab=donations&paid=1',
+                payerId: user.id,
+              })
+            }
+          >
+            Donate via RedFace Pay
+          </button>
+          <h3 className="text-sm font-semibold">Donations you received</h3>
+          <ReceiptList rows={donationsIn} empty="None yet." />
+          <h3 className="text-sm font-semibold">Donations you made</h3>
+          <ReceiptList rows={donationsOut} empty="None yet." />
+        </div>
       )}
-      <button type="button" className="btn-ghost mt-4 w-full" onClick={() => signOut()}>
+
+      {tab === 'purchases' && (
+        <div className="mt-5">
+          <Link to="/cart" className="btn-primary">
+            Open cart
+          </Link>
+          <h3 className="mt-6 text-sm font-semibold">Purchases</h3>
+          <ReceiptList rows={bought} empty="Nothing bought yet." />
+        </div>
+      )}
+
+      {tab === 'payout' && (
+        <div className="mt-5 space-y-6">
+          <form className="space-y-3" onSubmit={(e) => void onPayout(e)}>
+            <h2 className="font-display text-xl">1. Bank details</h2>
+            <p className="text-sm text-pa-muted">
+              Private on Pet Angels. Submit these first. You then wait for approval.
+            </p>
+            <input name="bank_name" className="input" placeholder="Bank name" defaultValue={payout?.bankName} required />
+            <input
+              name="account_name"
+              className="input"
+              placeholder="Account name"
+              defaultValue={payout?.accountName}
+              required
+            />
+            <input
+              name="account_number"
+              className="input"
+              placeholder="Account number"
+              defaultValue={payout?.accountNumber}
+              required
+            />
+            <input
+              name="branch_code"
+              className="input"
+              placeholder="Branch code"
+              defaultValue={payout?.branchCode}
+              required
+            />
+            <p className="text-sm font-semibold">
+              Status:{' '}
+              {!payout
+                ? 'not submitted'
+                : waiting
+                  ? 'waiting for approval'
+                  : approved
+                    ? 'approved — paste your subaccount'
+                    : payout.status}
+            </p>
+            <button className="btn-primary w-full" type="submit">
+              Submit bank details
+            </button>
+          </form>
+
+          <form className="space-y-3" onSubmit={(e) => void onSubaccount(e)}>
+            <h2 className="font-display text-xl">2. Subaccount → pay URL</h2>
+            {!approved ? (
+              <p className="text-sm text-pa-muted">
+                After an admin marks you approved, paste the RedFace subaccount id or pay link here. Pet
+                Angels turns it into your public URL automatically.
+              </p>
+            ) : (
+              <p className="text-sm text-pa-muted">
+                Paste the subaccount id you were given, or a full RedFace /pay/… link. We store the id and
+                show {REDFACE_PAY_URL}/pay/…
+              </p>
+            )}
+            <input
+              name="subaccount"
+              className="input"
+              placeholder="Subaccount id or https://www.redfacepay.co.za/pay/…"
+              defaultValue={merchantId || ''}
+              disabled={!approved}
+              required
+            />
+            <button className="btn-primary w-full" type="submit" disabled={!approved}>
+              Connect subaccount
+            </button>
+            {merchantLink && (
+              <a className="block break-all text-sm font-semibold text-pa-forest" href={merchantLink}>
+                {merchantLink}
+              </a>
+            )}
+          </form>
+        </div>
+      )}
+
+      <button type="button" className="btn-ghost mt-8 w-full" onClick={() => signOut()}>
         Sign out
       </button>
     </div>
+  );
+}
+
+function PayoutBanner({
+  waiting,
+  approved,
+  hasLink,
+  onOpen,
+}: {
+  waiting: boolean;
+  approved: boolean;
+  hasLink: boolean;
+  onOpen: () => void;
+}) {
+  if (hasLink) return null;
+  if (waiting) {
+    return (
+      <button type="button" className="mt-4 w-full rounded-2xl bg-amber-50 px-3 py-3 text-left text-sm" onClick={onOpen}>
+        Bank submitted — waiting for approval. You will paste your subaccount after that.
+      </button>
+    );
+  }
+  if (approved) {
+    return (
+      <button type="button" className="mt-4 w-full rounded-2xl bg-pa-sage/30 px-3 py-3 text-left text-sm" onClick={onOpen}>
+        Approved. Paste your RedFace subaccount to generate your pay URL.
+      </button>
+    );
+  }
+  return (
+    <button type="button" className="mt-4 w-full rounded-2xl bg-pa-sand px-3 py-3 text-left text-sm" onClick={onOpen}>
+      Add bank details to get approved for selling and donations.
+    </button>
   );
 }
 
