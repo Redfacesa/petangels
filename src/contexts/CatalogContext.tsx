@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { findAnimal, findProduct, findProfile, loadCatalog, seedCatalog, type Catalog } from '../lib/db';
+import { findAnimal, findProduct, findProfile, loadCatalog, emptyCatalog, type Catalog } from '../lib/db';
 
 type CatalogValue = Catalog & {
   loading: boolean;
@@ -12,7 +12,7 @@ type CatalogValue = Catalog & {
 const CatalogContext = createContext<CatalogValue | null>(null);
 
 export function CatalogProvider({ children }: { children: ReactNode }) {
-  const [catalog, setCatalog] = useState<Catalog>(seedCatalog);
+  const [catalog, setCatalog] = useState<Catalog>(emptyCatalog);
   const [loading, setLoading] = useState(true);
 
   async function refresh() {

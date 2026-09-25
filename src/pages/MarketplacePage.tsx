@@ -9,10 +9,9 @@ export default function MarketplacePage() {
   const { products, animals, profileById } = useCatalog();
   const catalog = useMemo(() => {
     if (!seller) return products;
-    if (seller === 'happypaws') return products.filter((p) => p.sellerId === 'p-happypaws');
     return products.filter((p) => {
       const shop = profileById(p.sellerId);
-      return shop?.handle === seller || p.sellerId.includes(seller);
+      return shop?.handle === seller || p.sellerId === seller;
     });
   }, [seller, products, profileById]);
   const goods = catalog.filter((p) => p.kind === 'product');
@@ -31,6 +30,14 @@ export default function MarketplacePage() {
       </Link>
 
       <h2 className="mt-8 font-display text-xl text-pa-forest">Products</h2>
+      {goods.length === 0 && (
+        <p className="mt-3 text-sm text-pa-muted">
+          No products yet.{' '}
+          <Link to="/create?type=product" className="font-semibold text-pa-forest">
+            List something
+          </Link>
+        </p>
+      )}
       <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
         {goods.map((p) => (
           <ProductCard key={p.id} product={p} />
@@ -38,6 +45,7 @@ export default function MarketplacePage() {
       </div>
 
       <h2 className="mt-10 font-display text-xl text-pa-forest">Services near you</h2>
+      {services.length === 0 && <p className="mt-3 text-sm text-pa-muted">No services listed yet.</p>}
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         {services.map((p) => (
           <ProductCard key={p.id} product={p} />
@@ -46,6 +54,7 @@ export default function MarketplacePage() {
 
       <h2 className="mt-10 font-display text-xl text-pa-forest">Animals looking for homes</h2>
       <p className="mt-1 text-xs text-pa-muted">Verified rescue / approved rehome only. No open animal trading.</p>
+      {looking.length === 0 && <p className="mt-3 text-sm text-pa-muted">No animals listed for adoption yet.</p>}
       <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
         {looking.map((a) => (
           <Link key={a.id} to={`/animals/${a.id}`} className="card overflow-hidden">

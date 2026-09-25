@@ -1,11 +1,4 @@
 import { supabase } from './supabase';
-import {
-  animals as seedAnimals,
-  posts as seedPosts,
-  products as seedProducts,
-  profiles as seedProfiles,
-  rescueCases as seedCases,
-} from './seed';
 import type { AnimalListing, Post, Product, Profile, RescueCase, PayKind } from './types';
 import { publicMediaUrl } from './media';
 
@@ -100,27 +93,27 @@ export type Catalog = {
   remote: boolean;
 };
 
-export const seedCatalog: Catalog = {
-  profiles: seedProfiles,
-  posts: seedPosts,
-  products: seedProducts,
-  animals: seedAnimals,
-  cases: seedCases,
+export const emptyCatalog: Catalog = {
+  profiles: [],
+  posts: [],
+  products: [],
+  animals: [],
+  cases: [],
   remote: false,
 };
 
 export async function loadCatalog(): Promise<Catalog> {
-  if (!supabase) return seedCatalog;
+  if (!supabase) return emptyCatalog;
   const [profiles, posts, listings, animals, cases] = await Promise.all([
-    supabase.from('pa_profiles').select('*'),
+    supabase.from('pa_profiles').select('id, handle, name, account_type, bio, city, avatar_url, cover_url, verified, pets, categories, redface_merchant_id, auth_user_id'),
     supabase.from('pa_posts').select('*').order('created_at', { ascending: false }),
     supabase.from('pa_listings').select('*'),
     supabase.from('pa_animals').select('*'),
     supabase.from('pa_cases').select('*').order('created_at', { ascending: false }),
   ]);
-  if (profiles.error || !profiles.data?.length) return seedCatalog;
+  if (profiles.error) return emptyCatalog;
   return {
-    profiles: profiles.data.map((row) => mapProfile(row as Record<string, unknown>)),
+    profiles: (profiles.data || []).map((row) => mapProfile(row as Record<string, unknown>)),
     posts: (posts.data || []).map((row) => mapPost(row as Record<string, unknown>)),
     products: (listings.data || []).map((row) => mapProduct(row as Record<string, unknown>)),
     animals: (animals.data || []).map((row) => mapAnimal(row as Record<string, unknown>)),
@@ -149,7 +142,7 @@ export async function upsertMyProfile(input: {
   accountType: Profile['type'];
   city?: string;
   bio?: string;
-  redfaceMerchantId?: string;
+  avatarUrl?: string;
 }) {
   if (!supabase) return;
   await supabase.from('pa_profiles').upsert({
@@ -160,8 +153,90 @@ export async function upsertMyProfile(input: {
     account_type: input.accountType,
     city: input.city || '',
     bio: input.bio || '',
-    redface_merchant_id: input.redfaceMerchantId || null,
+    avatar_url: input.avatarUrl || undefined,
   });
+}
+
+export type PayoutAccount = {
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  branchCode: string;
+  status: string;
+};
+
+export async function loadMyPayout(profileId: string): Promise<PayoutAccount | null> {
+  if (!supabase) return null;
+  const { data } = await supabase.from('pa_payout_accounts').select('*').eq('profile_id', profileId).maybeSingle();
+  if (!data) return null;
+  return {
+    bankName: String(data.bank_name || ''),
+    accountName: String(data.account_name || ''),
+    accountNumber: String(data.account_number || ''),
+    branchCode: String(data.branch_code || ''),
+    status: String(data.status || 'submitted'),
+  };
+}
+
+export async function saveMyPayout(profileId: string, input: Omit<PayoutAccount, 'status'>) {
+  if (!supabase) throw new Error('Database not configured');
+  const { error } = await supabase.from('pa_payout_accounts').upsert(
+    {
+      profile_id: profileId,
+      bank_name: input.bankName,
+      account_name: input.accountName,
+      account_number: input.accountNumber,
+      branch_code: input.branchCode,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'profile_id' },
+  );
+  if (error) throw error;
+}
+
+export type PayReceipt = {
+  id: string;
+  kind: string;
+  amount: number;
+  label: string;
+  status: string;
+  createdAt: string;
+};
+
+export async function loadMyReceipts(userId: string): Promise<PayReceipt[]> {
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from('pa_pay_events')
+    .select('id, kind, amount_zar, label, status, created_at')
+    .eq('payer_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(30);
+  return (data || []).map((row) => ({
+    id: String(row.id),
+    kind: String(row.kind),
+    amount: Number(row.amount_zar),
+    label: String(row.label),
+    status: String(row.status),
+    createdAt: String(row.created_at),
+  }));
+}
+
+export async function loadMySales(profileId: string): Promise<PayReceipt[]> {
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from('pa_pay_events')
+    .select('id, kind, amount_zar, label, status, created_at')
+    .eq('payee_profile_id', profileId)
+    .order('created_at', { ascending: false })
+    .limit(30);
+  return (data || []).map((row) => ({
+    id: String(row.id),
+    kind: String(row.kind),
+    amount: Number(row.amount_zar),
+    label: String(row.label),
+    status: String(row.status),
+    createdAt: String(row.created_at),
+  }));
 }
 
 export async function insertPost(row: {

@@ -36,23 +36,27 @@ export default function AnimalPage() {
         <Link to="/signup?next=/rescue" className="btn-primary">
           Start adoption enquiry
         </Link>
-        <button
-          type="button"
-          className="btn-rose"
-          onClick={() =>
-            void checkoutWithRedFacePay({
-              merchantId: org?.redfaceMerchantId,
-              amountZar: 150,
-              label: `Pet Angels · Support ${animal.name}`,
-              kind: 'donation',
-              returnPath: `/animals/${animal.id}?donated=1`,
-              payerId: user?.id,
-              payeeProfileId: org?.id,
-            })
-          }
-        >
-          Sponsor {animal.name}
-        </button>
+        {org?.redfaceMerchantId ? (
+          <button
+            type="button"
+            className="btn-rose"
+            onClick={() =>
+              void checkoutWithRedFacePay({
+                merchantId: org.redfaceMerchantId,
+                amountZar: 150,
+                label: `Pet Angels · Support ${animal.name}`,
+                kind: 'donation',
+                returnPath: `/animals/${animal.id}?donated=1`,
+                payerId: user?.id,
+                payeeProfileId: org.id,
+              })
+            }
+          >
+            Sponsor {animal.name}
+          </button>
+        ) : (
+          <p className="text-sm text-pa-muted">Sponsorship opens after this shelter has an issued merchant link.</p>
+        )}
       </div>
     </div>
   );

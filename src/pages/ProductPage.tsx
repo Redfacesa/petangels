@@ -30,21 +30,30 @@ export default function ProductPage() {
         </Link>
       )}
       <p className="mt-3 text-xs text-pa-muted">Paid with RedFace Pay. Pet Angels never takes the card details.</p>
+      {!seller?.redfaceMerchantId && (
+        <p className="mt-4 rounded-2xl bg-pa-sand px-4 py-3 text-sm text-pa-muted">
+          This seller does not have a merchant / subaccount link yet. An admin issues that after they
+          submit bank details. Checkout stays closed so money does not go to the platform shop by
+          mistake.
+        </p>
+      )}
       <div className="mt-6 flex flex-wrap gap-3">
         <button
           type="button"
           className="btn-primary"
-          onClick={() =>
+          disabled={!seller?.redfaceMerchantId}
+          onClick={() => {
+            if (!seller?.redfaceMerchantId) return;
             void checkoutWithRedFacePay({
-              merchantId: seller?.redfaceMerchantId,
+              merchantId: seller.redfaceMerchantId,
               amountZar: product.price,
               label: `Pet Angels · ${product.title}`,
               kind: product.kind === 'service' ? 'service' : 'product',
               returnPath: '/profile?paid=1',
               payerId: user?.id,
-              payeeProfileId: seller?.id,
-            })
-          }
+              payeeProfileId: seller.id,
+            });
+          }}
         >
           Pay with RedFace Pay
         </button>

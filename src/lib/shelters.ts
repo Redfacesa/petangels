@@ -19,9 +19,9 @@ export const mappedShelters: MappedShelter[] = [
     province: 'Western Cape',
     lat: -33.9249,
     lng: 18.4241,
-    story: 'Verified partner. Bruno, Milo and the active cases live here.',
-    profileHandle: 'capeanimalrescue',
-    donateId: 'p-cape',
+    story: 'Cape Town rescue on the Shelter Map. Donate once they have a live Pet Angels profile and merchant link.',
+    profileHandle: undefined,
+    donateId: undefined,
     episode: 'Pilot · Shelter of the Week',
   },
   {

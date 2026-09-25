@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { buildMerchantSignupUrl, checkoutWithRedFacePay } from '../lib/redface-pay';
+import { checkoutWithRedFacePay } from '../lib/redface-pay';
 import { saveLocalProfile } from '../lib/store';
 import { useAuth } from '../contexts/AuthContext';
 import { upsertMyProfile } from '../lib/db';
@@ -14,7 +14,6 @@ export default function JoinBusinessPage() {
     const fd = new FormData(e.currentTarget);
     const business = String(fd.get('business') || 'My pet store');
     const city = String(fd.get('city') || 'Cape Town');
-    const merchantId = String(fd.get('merchant_id') || '').trim();
     const handle = business.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 18);
     saveLocalProfile({
       displayName: business,
@@ -30,12 +29,8 @@ export default function JoinBusinessPage() {
         name: business,
         accountType: 'merchant',
         city,
-        redfaceMerchantId: merchantId || undefined,
       });
       setSaved(true);
-    }
-    if (!merchantId) {
-      window.location.href = buildMerchantSignupUrl();
     }
   }
 
@@ -44,8 +39,8 @@ export default function JoinBusinessPage() {
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Merchants</p>
       <h1 className="mt-1 font-display text-3xl">Sell on Pet Angels</h1>
       <p className="mt-3 text-sm text-pa-muted">
-        Your store lives on Pet Angels. Customers pay on RedFace Pay using your merchant link. Pet Angels
-        records the sale and can take a platform fee.
+        Save your shop name here. Put bank details on your profile. RedFace / Pet Angels admin then issues
+        your merchant or subaccount link. Buyers pay that link. You cannot paste your own merchant ID.
       </p>
 
       <div className="mt-6 grid gap-3 md:grid-cols-2">
@@ -54,7 +49,7 @@ export default function JoinBusinessPage() {
           <ul className="mt-2 space-y-1 text-sm text-pa-muted">
             <li>Profile</li>
             <li>Limited listings</li>
-            <li>Basic selling</li>
+            <li>Basic selling after your merchant link is issued</li>
           </ul>
         </div>
         <div className="card border-pa-forest p-4">
@@ -95,20 +90,13 @@ export default function JoinBusinessPage() {
           </label>
           <input id="city" name="city" className="input" defaultValue="Cape Town" />
         </div>
-        <div>
-          <label className="label" htmlFor="merchant_id">
-            RedFace Pay merchant ID
-          </label>
-          <input
-            id="merchant_id"
-            name="merchant_id"
-            className="input"
-            placeholder="Paste after you sign up on RedFace Pay"
-          />
-        </div>
-        {saved && <p className="text-sm text-pa-forest">Store saved. Listings will check out on that merchant link.</p>}
+        {saved && (
+          <p className="text-sm text-pa-forest">
+            Shop saved. Next: <Link to="/profile">add bank details on your profile</Link>.
+          </p>
+        )}
         <button className="btn-primary w-full" type="submit">
-          Save and open RedFace Pay signup
+          Save shop
         </button>
       </form>
       <p className="mt-4 text-center text-sm">

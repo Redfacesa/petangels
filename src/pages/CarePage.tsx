@@ -28,6 +28,11 @@ export default function CarePage() {
           <Filter key={k} active={kind === k} onClick={() => setKind(k)} label={careLabels[k]} />
         ))}
       </div>
+      {list.length === 0 && (
+        <p className="mt-6 rounded-3xl bg-pa-sand px-5 py-8 text-center text-sm text-pa-muted">
+          No caregivers yet. Real people will show here when they list walk, sit, or board services.
+        </p>
+      )}
       <div className="mt-6 space-y-3">
         {list.map((c) => (
           <article key={c.id} className="card flex gap-4 p-4">

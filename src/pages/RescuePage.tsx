@@ -11,8 +11,8 @@ export default function RescuePage() {
         <Link to="/create?type=report" className="btn-rose">
           Report an animal
         </Link>
-        <Link to="/donate/p-cape" className="btn-primary">
-          Donate via RedFace Pay
+        <Link to="/map" className="btn-primary">
+          Donate via a shelter on the map
         </Link>
         <Link to="/map" className="btn-ghost sm:col-span-2">
           The Shelter Map — South Africa
@@ -20,6 +20,7 @@ export default function RescuePage() {
       </div>
 
       <h2 className="mt-10 font-display text-xl text-pa-forest">Active cases</h2>
+      {cases.length === 0 && <p className="mt-3 text-sm text-pa-muted">No rescue cases yet.</p>}
       <div className="mt-3 space-y-3">
         {cases.map((c) => {
           const org = profileById(c.orgId);

@@ -10,7 +10,9 @@ export default function DonatePage() {
   const { user } = useAuth();
   const { profileById } = useCatalog();
   const org = orgId ? profileById(orgId) : undefined;
-  const name = org?.name || 'Pet Angels Rescue';
+  const name = org?.name || 'Pet Angels';
+  const merchantId = org ? org.redfaceMerchantId : undefined;
+  const canPayOrg = Boolean(merchantId);
 
   return (
     <div className="mx-auto max-w-md px-4 py-10">
@@ -20,23 +22,30 @@ export default function DonatePage() {
         Donations to a RedFace merchant go through RedFace Pay. Platform Pet Angels donations use
         the Paystack shop link. This database only stores the receipt.
       </p>
+      {org && !canPayOrg && (
+        <p className="mt-4 rounded-2xl bg-pa-sand px-4 py-3 text-sm text-pa-muted">
+          This organisation does not have an issued merchant / subaccount link yet.
+        </p>
+      )}
       <div className="mt-6 grid grid-cols-2 gap-3">
         {amounts.map((n) => (
           <button
             key={n}
             type="button"
             className="btn-ghost"
-            onClick={() =>
+            disabled={Boolean(org) && !canPayOrg}
+            onClick={() => {
+              if (org && !canPayOrg) return;
               void checkoutWithRedFacePay({
-                merchantId: org?.redfaceMerchantId,
+                merchantId,
                 amountZar: n,
                 label: `Donation · ${name}`,
                 kind: 'donation',
-                returnPath: `/u/${org?.handle || 'capeanimalrescue'}?donated=1`,
+                returnPath: org ? `/u/${org.handle}?donated=1` : '/profile?paid=1',
                 payerId: user?.id,
                 payeeProfileId: org?.id,
-              })
-            }
+              });
+            }}
           >
             R{n}
           </button>
@@ -45,17 +54,19 @@ export default function DonatePage() {
       <button
         type="button"
         className="btn-rose mt-4 w-full"
-        onClick={() =>
+        disabled={Boolean(org) && !canPayOrg}
+        onClick={() => {
+          if (org && !canPayOrg) return;
           void checkoutWithRedFacePay({
-            merchantId: org?.redfaceMerchantId,
+            merchantId,
             amountZar: 250,
             label: `Sponsorship · ${name}`,
             kind: 'sponsorship',
             returnPath: '/home',
             payerId: user?.id,
             payeeProfileId: org?.id,
-          })
-        }
+          });
+        }}
       >
         Sponsor Rescue Week — R250
       </button>

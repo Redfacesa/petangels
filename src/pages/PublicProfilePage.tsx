@@ -42,25 +42,30 @@ export default function PublicProfilePage() {
             )}
           </div>
         </div>
-        {(profile.type === 'shelter' || profile.type === 'merchant') && (
-          <button
-            type="button"
-            className="btn-rose mt-5"
-            onClick={() =>
-              void checkoutWithRedFacePay({
-                merchantId: profile.redfaceMerchantId,
-                amountZar: 200,
-                label: `Donation · ${profile.name}`,
-                kind: 'donation',
-                returnPath: `/u/${profile.handle}?donated=1`,
-                payerId: user?.id,
-                payeeProfileId: profile.id,
-              })
-            }
-          >
-            {profile.type === 'shelter' ? 'Donate with RedFace Pay' : 'Pay this store with RedFace Pay'}
-          </button>
-        )}
+        {(profile.type === 'shelter' || profile.type === 'merchant') &&
+          (profile.redfaceMerchantId ? (
+            <button
+              type="button"
+              className="btn-rose mt-5"
+              onClick={() =>
+                void checkoutWithRedFacePay({
+                  merchantId: profile.redfaceMerchantId,
+                  amountZar: 200,
+                  label: `Donation · ${profile.name}`,
+                  kind: 'donation',
+                  returnPath: `/u/${profile.handle}?donated=1`,
+                  payerId: user?.id,
+                  payeeProfileId: profile.id,
+                })
+              }
+            >
+              {profile.type === 'shelter' ? 'Donate with RedFace Pay' : 'Pay this store with RedFace Pay'}
+            </button>
+          ) : (
+            <p className="mt-5 text-sm text-pa-muted">
+              Payments open after admin issues this profile a RedFace merchant / subaccount link.
+            </p>
+          ))}
       </div>
 
       {theirProducts.length > 0 && (

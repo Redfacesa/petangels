@@ -19,13 +19,23 @@ export default function CartPage() {
   );
   const total = rows.reduce((sum, r) => sum + (r.product?.price || 0) * r.qty, 0);
 
+  const sellers = rows.map((r) => profileById(r.product!.sellerId));
+  const merchantIds = [
+    ...new Set(sellers.map((s) => s?.redfaceMerchantId).filter((id): id is string => Boolean(id))),
+  ];
+  const canCheckout = merchantIds.length === 1 && sellers.every((s) => s?.redfaceMerchantId === merchantIds[0]);
+
   function checkout() {
+    if (!canCheckout) return;
+    const seller = sellers[0];
     void checkoutWithRedFacePay({
+      merchantId: seller?.redfaceMerchantId,
       amountZar: total || 1,
       label: `Pet Angels cart · ${rows.length} item(s)`,
       kind: 'product',
       returnPath: '/profile?paid=1',
       payerId: user?.id,
+      payeeProfileId: seller?.id,
     });
   }
 
@@ -64,8 +74,12 @@ export default function CartPage() {
       {rows.length > 0 && (
         <div className="mt-6">
           <p className="font-semibold">Total {zar(total)}</p>
-          <p className="mt-1 text-xs text-pa-muted">Checkout opens the RedFace Pay merchant link.</p>
-          <button type="button" className="btn-primary mt-4 w-full" onClick={checkout}>
+          <p className="mt-1 text-xs text-pa-muted">
+            {canCheckout
+              ? 'Checkout opens that seller’s RedFace Pay merchant / subaccount link.'
+              : 'Checkout needs one seller with an issued merchant link. Pay from each listing if shops differ, or wait until admin issues their link.'}
+          </p>
+          <button type="button" className="btn-primary mt-4 w-full" onClick={checkout} disabled={!canCheckout}>
             Pay with RedFace Pay
           </button>
         </div>

@@ -71,7 +71,7 @@ export default function SignupPage() {
       <h1 className="mt-8 font-display text-3xl">Create your Pet Angels account</h1>
       <p className="mt-2 text-sm text-pa-muted">
         {type === 'merchant'
-          ? 'Your login lives on Pet Angels. Selling uses your RedFace Pay merchant link.'
+          ? 'Your login lives on Pet Angels. Add bank details on your profile; admin issues the selling link.'
           : type === 'shelter'
             ? 'Rescue organisations get a verified profile here. Donations still settle on RedFace Pay.'
             : 'Pet parents get a profile, animals, stories, marketplace, and donations.'}

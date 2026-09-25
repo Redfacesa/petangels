@@ -23,6 +23,9 @@ export default function DiscoverPage() {
       </div>
 
       <Section title="Animals looking for homes">
+        {looking.length === 0 ? (
+          <p className="text-sm text-pa-muted">No adoption listings yet.</p>
+        ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
           {looking.map((a) => (
             <Link key={a.id} to={`/animals/${a.id}`} className="card overflow-hidden">
@@ -36,6 +39,7 @@ export default function DiscoverPage() {
             </Link>
           ))}
         </div>
+        )}
       </Section>
 
       <Section title="Shelters">
@@ -61,6 +65,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 function ProfileRow({ items }: { items: ReturnType<typeof useCatalog>['profiles'] }) {
+  if (items.length === 0) return <p className="text-sm text-pa-muted">Nobody here yet.</p>;
   return (
     <div className="flex gap-3 overflow-x-auto pb-2">
       {items.map((p) => (
