@@ -1,0 +1,2 @@
+[functions.pay-webhook]
+verify_jwt = false

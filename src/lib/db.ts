@@ -270,15 +270,33 @@ export async function recordPayHandoff(input: {
   amountZar: number;
   label: string;
   merchantId?: string;
-}) {
-  if (!supabase || !input.payerId) return;
-  await supabase.from('pa_pay_events').insert({
-    payer_id: input.payerId,
+  provider?: string;
+}): Promise<string | null> {
+  if (!supabase) return null;
+  const payload = {
+    payer_id: input.payerId || null,
     payee_profile_id: input.payeeProfileId || null,
     kind: input.kind,
     amount_zar: input.amountZar,
     label: input.label,
     redface_merchant_id: input.merchantId || null,
+    provider: input.provider || 'redface',
     status: 'redirected',
-  });
+  };
+  const first = await supabase.from('pa_pay_events').insert(payload).select('id').single();
+  if (!first.error && first.data?.id) return String(first.data.id);
+  const fallback = await supabase
+    .from('pa_pay_events')
+    .insert({
+      payer_id: payload.payer_id,
+      payee_profile_id: payload.payee_profile_id,
+      kind: payload.kind,
+      amount_zar: payload.amount_zar,
+      label: payload.label,
+      redface_merchant_id: payload.redface_merchant_id,
+      status: 'redirected',
+    })
+    .select('id')
+    .single();
+  return fallback.data?.id ? String(fallback.data.id) : null;
 }

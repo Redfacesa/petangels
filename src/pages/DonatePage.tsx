@@ -17,8 +17,8 @@ export default function DonatePage() {
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Donations</p>
       <h1 className="mt-1 font-display text-3xl">Support {name}</h1>
       <p className="mt-3 text-sm text-pa-muted">
-        Donations, sponsorships, and fundraising run on RedFace Pay — the same merchant rails as product
-        checkout. Pet Angels records the handoff in this database.
+        Donations to a RedFace merchant go through RedFace Pay. Platform Pet Angels donations use
+        the Paystack shop link. This database only stores the receipt.
       </p>
       <div className="mt-6 grid grid-cols-2 gap-3">
         {amounts.map((n) => (
