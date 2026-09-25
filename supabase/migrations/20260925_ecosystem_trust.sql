@@ -36,10 +36,13 @@ create table if not exists public.pa_pets (
     check (status in ('companion', 'looking_for_home', 'foster_needed', 'adopted', 'lost', 'found')),
   medical_notes text not null default '',
   contact text not null default '',
+  public_contact text not null default '',
   last_seen_at date,
   last_seen_place text not null default '',
   created_at timestamptz not null default now()
 );
+
+alter table public.pa_pets add column if not exists public_contact text not null default '';
 
 alter table public.pa_posts
   add column if not exists pet_id text references public.pa_pets (id) on delete set null,
@@ -106,7 +109,12 @@ alter table public.pa_reports enable row level security;
 alter table public.pa_notifications enable row level security;
 
 drop policy if exists pa_pets_read on public.pa_pets;
-create policy pa_pets_read on public.pa_pets for select using (true);
+drop policy if exists pa_pets_owner_staff_read on public.pa_pets;
+create policy pa_pets_owner_staff_read on public.pa_pets for select to authenticated
+  using (
+    owner_id in (select id from public.pa_profiles where auth_user_id = auth.uid())
+    or public.pa_is_staff()
+  );
 
 drop policy if exists pa_pets_write on public.pa_pets;
 create policy pa_pets_write on public.pa_pets for insert to authenticated
@@ -197,11 +205,10 @@ create policy pa_notes_read on public.pa_notifications for select to authenticat
 
 drop policy if exists pa_notes_update on public.pa_notifications;
 create policy pa_notes_update on public.pa_notifications for update to authenticated
-  using (user_id = auth.uid());
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
 
 drop policy if exists pa_notes_insert on public.pa_notifications;
-create policy pa_notes_insert on public.pa_notifications for insert to authenticated
-  with check (true);
 
 drop policy if exists pa_payout_staff_read on public.pa_payout_accounts;
 create policy pa_payout_staff_read on public.pa_payout_accounts for select to authenticated
@@ -215,9 +222,31 @@ grant select, insert, update on public.pa_pets to authenticated;
 grant select, insert, update on public.pa_care_offers to authenticated;
 grant select, insert, update on public.pa_care_requests to authenticated;
 grant select, insert, update on public.pa_reports to authenticated;
-grant select, insert, update on public.pa_notifications to authenticated;
-grant select on public.pa_pets to anon;
+grant select, update on public.pa_notifications to authenticated;
 grant select on public.pa_care_offers to anon;
+
+-- Public listing fields only. medical_notes and private contact stay on the table.
+create or replace view public.pa_pets_public as
+  select
+    id,
+    owner_id,
+    name,
+    photo_url,
+    species,
+    breed,
+    age,
+    city,
+    about,
+    status,
+    last_seen_at,
+    last_seen_place,
+    public_contact,
+    created_at
+  from public.pa_pets;
+
+revoke all on public.pa_pets_public from public;
+grant select on public.pa_pets_public to anon, authenticated;
+revoke select on public.pa_pets from anon;
 
 create or replace function public.pa_lock_admin_profile_fields()
 returns trigger
@@ -233,6 +262,11 @@ begin
       new.shelter_verified := false;
       new.caregiver_verified := false;
       new.phone_verified := false;
+      new.email_verified := exists (
+        select 1 from auth.users u
+        where u.id = coalesce(new.auth_user_id, auth.uid())
+          and u.email_confirmed_at is not null
+      );
     elsif tg_op = 'UPDATE' then
       if not public.pa_is_staff() then
         new.verified := old.verified;
@@ -291,6 +325,8 @@ begin
   return new;
 end;
 $$;
+
+revoke insert on public.pa_notifications from authenticated, anon;
 
 drop trigger if exists pa_notify_like on public.pa_likes;
 create trigger pa_notify_like

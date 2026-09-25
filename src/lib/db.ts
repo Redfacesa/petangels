@@ -136,6 +136,7 @@ export function mapPet(row: Record<string, unknown>): Pet {
     status: (row.status as Pet['status']) || 'companion',
     medicalNotes: String(row.medical_notes || ''),
     contact: String(row.contact || ''),
+    publicContact: String(row.public_contact || ''),
     lastSeenAt: row.last_seen_at ? String(row.last_seen_at) : undefined,
     lastSeenPlace: String(row.last_seen_place || ''),
   };
@@ -191,7 +192,7 @@ export async function loadCatalog(): Promise<Catalog> {
     supabase.from('pa_listings').select('*'),
     supabase.from('pa_animals').select('*'),
     supabase.from('pa_cases').select('*').order('created_at', { ascending: false }),
-    supabase.from('pa_pets').select('*').order('created_at', { ascending: false }),
+    supabase.from('pa_pets_public').select('*').order('created_at', { ascending: false }),
     supabase.from('pa_care_offers').select('*').eq('active', true),
   ]);
   if (profiles.error) {
@@ -443,7 +444,8 @@ export async function insertPet(row: {
       about: row.about || '',
       status: row.status || 'companion',
       photo_url: row.photoUrl,
-      contact: row.contact || '',
+      contact: row.status === 'lost' || row.status === 'found' ? '' : row.contact || '',
+      public_contact: row.status === 'lost' || row.status === 'found' ? row.contact || '' : '',
       last_seen_place: row.lastSeenPlace || '',
       last_seen_at: row.lastSeenAt || null,
       medical_notes: row.medicalNotes || '',
@@ -452,6 +454,20 @@ export async function insertPet(row: {
     .single();
   if (error) throw error;
   return mapPet(data as Record<string, unknown>);
+}
+
+export async function loadPetPrivate(petId: string): Promise<{ medicalNotes: string; contact: string } | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('pa_pets')
+    .select('medical_notes, contact')
+    .eq('id', petId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return {
+    medicalNotes: String(data.medical_notes || ''),
+    contact: String(data.contact || ''),
+  };
 }
 
 export async function likePost(postId: string, userId: string) {

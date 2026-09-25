@@ -72,6 +72,7 @@ export type Pet = {
   status: PetStatus;
   medicalNotes: string;
   contact: string;
+  publicContact: string;
   lastSeenAt?: string;
   lastSeenPlace: string;
 };
