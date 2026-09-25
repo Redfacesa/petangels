@@ -59,6 +59,12 @@ export default function LoginPage() {
           Create account
         </Link>
       </p>
+      <p className="mt-3 text-center text-xs text-pa-muted">
+        Looking for the public site?{' '}
+        <a href="https://petangelssa.co.za/" className="font-semibold text-pa-forest">
+          petangelssa.co.za
+        </a>
+      </p>
     </div>
   );
 }

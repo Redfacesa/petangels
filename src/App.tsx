@@ -29,9 +29,15 @@ import ArticlePage from './pages/ArticlePage';
 import PetPage from './pages/PetPage';
 import AdminPage from './pages/AdminPage';
 import InboxPage from './pages/InboxPage';
+import { isMarketingHost } from './lib/hosts';
 
 function Gate({ children }: { children: ReactNode }) {
   return <RequireAuth>{children}</RequireAuth>;
+}
+
+function RootIndex() {
+  if (isMarketingHost()) return <WelcomePage />;
+  return <Navigate to="/home" replace />;
 }
 
 export default function App() {
@@ -41,7 +47,8 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<AppShell />}>
-            <Route path="/" element={<WelcomePage />} />
+            <Route path="/" element={<RootIndex />} />
+            <Route path="/welcome" element={<WelcomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />

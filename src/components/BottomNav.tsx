@@ -15,6 +15,7 @@ export default function BottomNav() {
   const loc = useLocation();
   const hide =
     loc.pathname === '/' ||
+    loc.pathname === '/welcome' ||
     loc.pathname.startsWith('/login') ||
     loc.pathname.startsWith('/signup') ||
     loc.pathname.startsWith('/legal') ||

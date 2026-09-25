@@ -1,5 +1,8 @@
-export const SITE_HOST = 'app.petangelssa.co.za';
-export const CANONICAL_SITE_URL = `https://${SITE_HOST}`;
+import { APP_HOST, APP_URL, MARKETING_HOST, MARKETING_URL, currentHost, isMarketingHost } from './hosts';
+
+export const SITE_HOST = APP_HOST;
+export const CANONICAL_SITE_URL = APP_URL;
+export { MARKETING_HOST, MARKETING_URL, APP_HOST, APP_URL };
 
 export const ECOSYSTEM_FROM = 'pet-angels';
 
@@ -16,7 +19,10 @@ export const ADSENSE_SLOT_RAIL = (import.meta.env.VITE_ADSENSE_SLOT_RAIL || '').
 export const ADSENSE_SLOT_WRAP = (import.meta.env.VITE_ADSENSE_SLOT_WRAP || '').trim();
 
 export function siteUrl() {
-  if (typeof window !== 'undefined') return window.location.origin;
+  if (typeof window !== 'undefined') {
+    if (isMarketingHost(currentHost())) return APP_URL;
+    return window.location.origin;
+  }
   return (import.meta.env.VITE_SITE_URL || CANONICAL_SITE_URL).replace(/\/$/, '');
 }
 

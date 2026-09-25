@@ -1,3 +1,16 @@
 {
-  "rewrites": [{ "source": "/((?!assets/|brand/|ads\\.txt|manifest\\.webmanifest|favicon\\.svg).*)", "destination": "/index.html" }]
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.petangelssa.co.za" }],
+      "destination": "https://petangelssa.co.za/:path*",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/((?!assets/|brand/|ads\\.txt|manifest\\.webmanifest|favicon\\.svg).*)",
+      "destination": "/index.html"
+    }
+  ]
 }

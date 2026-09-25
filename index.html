@@ -13,7 +13,19 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="canonical" href="https://app.petangelssa.co.za/" />
-    <title>Pet Angels SA · app.petangelssa.co.za</title>
+    <title>Pet Angels SA</title>
+    <script>
+      (function () {
+        var h = location.hostname.replace(/^www\./, '');
+        var canonical = document.querySelector('link[rel="canonical"]');
+        if (h === 'petangelssa.co.za') {
+          if (canonical) canonical.setAttribute('href', 'https://petangelssa.co.za/');
+          document.title = 'Pet Angels SA';
+        } else if (h === 'app.petangelssa.co.za') {
+          document.title = 'Pet Angels SA · app';
+        }
+      })();
+    </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script
       async

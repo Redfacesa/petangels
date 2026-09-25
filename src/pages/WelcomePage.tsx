@@ -1,6 +1,7 @@
-import { Link } from 'react-router-dom';
 import BrandMark from '../components/BrandMark';
+import AppLink from '../components/AppLink';
 import { useAuth } from '../contexts/AuthContext';
+import { APP_URL } from '../lib/hosts';
 
 const HERO = '/brand/hero-dogs.png';
 const CAT = '/brand/hero-cat.png';
@@ -26,21 +27,24 @@ export default function WelcomePage() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             {user ? (
-              <Link to="/home" className="rounded-full bg-pa-cream px-6 py-3 text-sm font-semibold text-pa-forest">
+              <AppLink to="/home" className="rounded-full bg-pa-cream px-6 py-3 text-sm font-semibold text-pa-forest">
                 Open the app
-              </Link>
+              </AppLink>
             ) : (
               <>
-                <Link to="/signup" className="rounded-full bg-pa-cream px-6 py-3 text-sm font-semibold text-pa-forest">
+                <AppLink to="/signup" className="rounded-full bg-pa-cream px-6 py-3 text-sm font-semibold text-pa-forest">
                   Sign up free
-                </Link>
-                <Link to="/login" className="rounded-full border border-pa-cream/50 px-6 py-3 text-sm font-semibold text-pa-cream">
+                </AppLink>
+                <AppLink to="/login" className="rounded-full border border-pa-cream/50 px-6 py-3 text-sm font-semibold text-pa-cream">
                   Sign in
-                </Link>
+                </AppLink>
               </>
             )}
           </div>
-          <p className="mt-4 text-xs text-pa-sage">app.petangelssa.co.za · Payments by RedFace Pay & Paystack</p>
+          <p className="mt-4 text-xs text-pa-sage">
+            The story lives at petangelssa.co.za · The app is {APP_URL.replace('https://', '')} · Payments by RedFace Pay
+            & Paystack
+          </p>
         </div>
       </section>
 
@@ -97,24 +101,24 @@ export default function WelcomePage() {
             <li>Your profile, animals, orders and donations</li>
           </ul>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link to="/signup" className="btn-primary w-fit">
+            <AppLink to="/signup" className="btn-primary w-fit">
               Create an account to enter
-            </Link>
-            <Link to="/map" className="rounded-full border border-pa-forest px-6 py-3 text-sm font-semibold text-pa-forest">
+            </AppLink>
+            <AppLink to="/map" className="rounded-full border border-pa-forest px-6 py-3 text-sm font-semibold text-pa-forest">
               Find shelters
-            </Link>
-            <Link to="/journal" className="rounded-full border border-pa-forest px-6 py-3 text-sm font-semibold text-pa-forest">
+            </AppLink>
+            <AppLink to="/journal" className="rounded-full border border-pa-forest px-6 py-3 text-sm font-semibold text-pa-forest">
               Animal journal
-            </Link>
+            </AppLink>
           </div>
         </div>
       </section>
 
       <section className="border-t border-pa-sand px-4 py-10 text-center text-xs text-pa-muted">
         Placeholder photos for launch — brand photography can replace these later.{' '}
-        <Link to="/legal" className="font-semibold text-pa-forest">
+        <a href="/legal" className="font-semibold text-pa-forest">
           Welfare rules
-        </Link>
+        </a>
       </section>
     </div>
   );
@@ -134,13 +138,13 @@ function TypeCard({
   body: string;
 }) {
   return (
-    <Link to={to} className="card overflow-hidden hover:border-pa-forest">
+    <AppLink to={to} className="card overflow-hidden hover:border-pa-forest">
       <img src={image} alt="" className="h-44 w-full object-cover" />
       <div className="p-5">
         <p className="text-xs font-semibold uppercase tracking-wider text-pa-forest">{role}</p>
         <p className="mt-1 font-display text-2xl text-pa-ink">{title}</p>
         <p className="mt-2 text-sm text-pa-muted">{body}</p>
       </div>
-    </Link>
+    </AppLink>
   );
 }
