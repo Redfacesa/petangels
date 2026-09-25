@@ -6,12 +6,15 @@ import { checkoutWithRedFacePay } from '../lib/redface-pay';
 import { REDFACE_PAY_URL, zar } from '../lib/config';
 import {
   insertListing,
+  loadAdoptions,
   loadMyPayout,
   loadMyReceipts,
   loadMySales,
   saveMyPayout,
   saveMySubaccount,
+  setAdoptionStatus,
   upsertMyProfile,
+  type AdoptionRow,
   type PayReceipt,
   type PayoutAccount,
 } from '../lib/db';
@@ -22,7 +25,7 @@ import TrustBadges from '../components/TrustBadges';
 import PaymentSetup from '../components/PaymentSetup';
 import { isStaffUser } from '../components/TrustBadges';
 
-type Tab = 'posts' | 'animals' | 'market' | 'donations' | 'purchases' | 'payout';
+type Tab = 'posts' | 'animals' | 'market' | 'donations' | 'purchases' | 'payout' | 'activity' | 'edit';
 
 export default function ProfilePage() {
   const { user, signOut, loading } = useAuth();
@@ -35,6 +38,7 @@ export default function ProfilePage() {
   const [payout, setPayout] = useState<PayoutAccount | null>(null);
   const [bought, setBought] = useState<PayReceipt[]>([]);
   const [sales, setSales] = useState<PayReceipt[]>([]);
+  const [adoptions, setAdoptions] = useState<AdoptionRow[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
@@ -44,6 +48,7 @@ export default function ProfilePage() {
     void loadMyPayout(user.id).then(setPayout);
     void loadMyReceipts(user.id).then(setBought);
     void loadMySales(user.id).then(setSales);
+    void loadAdoptions().then(setAdoptions);
   }, [user]);
 
   if (loading) return <p className="p-10 text-center text-pa-muted">Loading…</p>;
@@ -187,7 +192,7 @@ export default function ProfilePage() {
               @{handle}
               {city ? ` · ${city}` : ''}
             </p>
-            {mine && <TrustBadges profile={mine} />}
+            {mine && <TrustBadges profile={mine} emailConfirmed={Boolean(user.email_confirmed_at)} />}
             {isStaffUser(user.email, mine) && (
               <Link to="/admin" className="mt-2 inline-block text-xs font-semibold text-pa-forest">
                 Admin
@@ -221,6 +226,8 @@ export default function ProfilePage() {
             ['market', 'Marketplace'],
             ['donations', 'Donations'],
             ['purchases', 'Purchases & cart'],
+            ['activity', 'Applications'],
+            ['edit', 'Edit profile'],
             ['payout', 'Bank & payouts'],
           ] as const
         ).map(([id, label]) => (
@@ -351,6 +358,86 @@ export default function ProfilePage() {
           <h3 className="mt-6 text-sm font-semibold">Purchases</h3>
           <ReceiptList rows={bought} empty="Nothing bought yet." />
         </div>
+      )}
+
+      {tab === 'activity' && (
+        <div className="mt-5 space-y-4">
+          <h2 className="font-display text-xl">Adoption applications</h2>
+          {adoptions.length === 0 && (
+            <p className="text-sm text-pa-muted">None yet. Apply from an adoption pet page.</p>
+          )}
+          {adoptions.map((a) => {
+            const incoming = myPets.some((p) => p.id === a.petId);
+            const pet = myPets.find((p) => p.id === a.petId) || pets.find((p) => p.id === a.petId);
+            return (
+              <div key={a.id} className="card p-3 text-sm">
+                <p className="font-semibold">
+                  {pet?.name || 'Pet'} · {a.status}
+                </p>
+                <p className="text-pa-muted">{a.message}</p>
+                {incoming && a.status === 'requested' && (
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-pa-forest"
+                      onClick={() =>
+                        void setAdoptionStatus(a.id, 'viewed').then(async () => setAdoptions(await loadAdoptions()))
+                      }
+                    >
+                      Mark viewed
+                    </button>
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-pa-forest"
+                      onClick={() =>
+                        void setAdoptionStatus(a.id, 'accepted').then(async () => setAdoptions(await loadAdoptions()))
+                      }
+                    >
+                      Accept
+                    </button>
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-pa-rose"
+                      onClick={() =>
+                        void setAdoptionStatus(a.id, 'declined').then(async () => setAdoptions(await loadAdoptions()))
+                      }
+                    >
+                      Decline
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {tab === 'edit' && (
+        <form
+          className="mt-5 space-y-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData(e.currentTarget);
+            void upsertMyProfile({
+              userId: user.id,
+              handle,
+              name: String(fd.get('name') || name),
+              accountType,
+              city: String(fd.get('city') || ''),
+              bio: String(fd.get('bio') || ''),
+            })
+              .then(() => refresh())
+              .then(() => setMsg('Profile updated.'))
+              .catch((e2) => setErr(e2 instanceof Error ? e2.message : 'Could not save'));
+          }}
+        >
+          <input name="name" className="input" defaultValue={name} placeholder="Display name" required />
+          <input name="city" className="input" defaultValue={city} placeholder="City" />
+          <textarea name="bio" className="input min-h-24" defaultValue={mine?.bio || ''} placeholder="About you" />
+          <button className="btn-primary w-full" type="submit">
+            Save profile
+          </button>
+        </form>
       )}
 
       {tab === 'payout' && (

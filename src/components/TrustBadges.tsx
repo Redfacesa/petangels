@@ -25,7 +25,13 @@ const none: Trust = {
   staff: false,
 };
 
-export default function TrustBadges({ profile }: { profile: Profile }) {
+export default function TrustBadges({
+  profile,
+  emailConfirmed,
+}: {
+  profile: Profile;
+  emailConfirmed?: boolean;
+}) {
   const trust = profile.trust || none;
   const shown = labels.filter((l) => {
     if (l.key === 'businessVerified') return profile.type === 'merchant' || trust.businessVerified;
@@ -36,7 +42,7 @@ export default function TrustBadges({ profile }: { profile: Profile }) {
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
       {shown.map((l) => {
-        const on = trust[l.key];
+        const on = l.key === 'emailVerified' ? Boolean(emailConfirmed || trust.emailVerified) : trust[l.key];
         return (
           <span
             key={l.key}

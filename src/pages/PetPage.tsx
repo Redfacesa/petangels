@@ -4,7 +4,7 @@ import { useCatalog } from '../contexts/CatalogContext';
 import { useAuth } from '../contexts/AuthContext';
 import FeedCard from '../components/FeedCard';
 import TrustBadges, { isStaffUser } from '../components/TrustBadges';
-import { loadPetPrivate } from '../lib/db';
+import { loadPetPrivate, applyToAdopt } from '../lib/db';
 
 const statusLabel: Record<string, string> = {
   companion: 'Family pet',
@@ -67,6 +67,9 @@ export default function PetPage() {
           {pet.publicContact && <p>📞 {pet.publicContact}</p>}
         </div>
       )}
+      {pet.status === 'looking_for_home' && user && user.id !== pet.ownerId && (
+        <AdoptionForm petId={pet.id} applicantId={user.id} />
+      )}
       {pet.status === 'looking_for_home' && (
         <p className="mt-4 rounded-2xl bg-pa-sand p-4 text-xs text-pa-muted">
           Adoption listing through a shelter. This is not a marketplace sale.
@@ -77,5 +80,30 @@ export default function PetPage() {
         {stories.length === 0 ? <p className="text-sm text-pa-muted">No stories tagged to {pet.name} yet.</p> : stories.map((p) => <FeedCard key={p.id} post={p} />)}
       </div>
     </div>
+  );
+}
+
+function AdoptionForm({ petId, applicantId }: { petId: string; applicantId: string }) {
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  return (
+    <form
+      className="mt-6 space-y-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        void applyToAdopt(petId, applicantId, String(fd.get('message') || ''))
+          .then(() => setMsg('Application sent. The shelter will see it and you will get an alert when they respond.'))
+          .catch((e2) => setErr(e2 instanceof Error ? e2.message : 'Could not apply. Paste the adoptions SQL if needed.'));
+      }}
+    >
+      <h2 className="font-display text-xl">Apply to adopt</h2>
+      <textarea name="message" className="input min-h-24" placeholder="Home, other pets, why this animal…" required />
+      {msg && <p className="text-sm text-pa-forest">{msg}</p>}
+      {err && <p className="text-sm text-pa-rose">{err}</p>}
+      <button className="btn-primary" type="submit">
+        Send application
+      </button>
+    </form>
   );
 }

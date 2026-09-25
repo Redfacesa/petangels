@@ -591,6 +591,90 @@ export async function requestCare(offerId: string, requesterId: string, kind: st
   if (error) throw error;
 }
 
+export type CareRequestRow = {
+  id: string;
+  offerId: string;
+  requesterId: string;
+  kind: string;
+  status: string;
+  createdAt: string;
+};
+
+export async function loadCareRequests(): Promise<CareRequestRow[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('pa_care_requests')
+    .select('id, offer_id, requester_id, kind, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(80);
+  if (error) return [];
+  return (data || []).map((r) => ({
+    id: String(r.id),
+    offerId: String(r.offer_id),
+    requesterId: String(r.requester_id),
+    kind: String(r.kind),
+    status: String(r.status),
+    createdAt: String(r.created_at),
+  }));
+}
+
+export async function setCareRequestStatus(id: string, status: 'accepted' | 'completed' | 'declined') {
+  if (!supabase) throw new Error('Database not configured');
+  const { error } = await supabase.from('pa_care_requests').update({ status }).eq('id', id);
+  if (error) throw error;
+}
+
+export type AdoptionRow = {
+  id: string;
+  petId: string;
+  applicantId: string;
+  message: string;
+  status: string;
+  createdAt: string;
+};
+
+export async function applyToAdopt(petId: string, applicantId: string, message: string) {
+  if (!supabase) throw new Error('Database not configured');
+  const { error } = await supabase.from('pa_adoptions').upsert(
+    {
+      pet_id: petId,
+      applicant_id: applicantId,
+      message,
+      status: 'requested',
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'pet_id,applicant_id' },
+  );
+  if (error) throw error;
+}
+
+export async function loadAdoptions(): Promise<AdoptionRow[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('pa_adoptions')
+    .select('id, pet_id, applicant_id, message, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(80);
+  if (error) return [];
+  return (data || []).map((r) => ({
+    id: String(r.id),
+    petId: String(r.pet_id),
+    applicantId: String(r.applicant_id),
+    message: String(r.message || ''),
+    status: String(r.status),
+    createdAt: String(r.created_at),
+  }));
+}
+
+export async function setAdoptionStatus(id: string, status: 'viewed' | 'accepted' | 'declined') {
+  if (!supabase) throw new Error('Database not configured');
+  const { error } = await supabase
+    .from('pa_adoptions')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+}
+
 export type AppNotification = {
   id: string;
   title: string;

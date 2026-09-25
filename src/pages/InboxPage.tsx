@@ -14,7 +14,7 @@ export default function InboxPage() {
     <div className="mx-auto max-w-lg px-4 py-8">
       <h1 className="font-display text-3xl">Notifications</h1>
       {rows.length === 0 ? (
-        <p className="mt-4 text-sm text-pa-muted">No notifications yet. Likes on your pet’s stories will land here.</p>
+        <p className="mt-4 text-sm text-pa-muted">No notifications yet. Likes, comments, adoption and care updates land here.</p>
       ) : (
         <ul className="mt-5 space-y-2">
           {rows.map((n) => (
