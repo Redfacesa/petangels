@@ -282,8 +282,6 @@ export async function upsertMyProfile(input: {
 }) {
   if (!supabase) throw new Error('Database not configured');
   const row: Record<string, unknown> = {
-    id: input.userId,
-    auth_user_id: input.userId,
     handle: input.handle,
     name: input.name,
     account_type: input.accountType,
@@ -291,7 +289,16 @@ export async function upsertMyProfile(input: {
     bio: input.bio || '',
   };
   if (input.avatarUrl) row.avatar_url = input.avatarUrl;
-  const { error } = await supabase.from('pa_profiles').upsert(row);
+
+  const update = await supabase.from('pa_profiles').update(row).eq('auth_user_id', input.userId).select('id');
+  if (update.error) throw update.error;
+  if (update.data && update.data.length > 0) return;
+
+  const { error } = await supabase.from('pa_profiles').insert({
+    id: input.userId,
+    auth_user_id: input.userId,
+    ...row,
+  });
   if (error) throw error;
 }
 
