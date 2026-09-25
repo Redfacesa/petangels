@@ -1,3 +1,6 @@
+export const SITE_HOST = 'www.petangelssa.co.za';
+export const CANONICAL_SITE_URL = `https://${SITE_HOST}`;
+
 export const ECOSYSTEM_FROM = 'pet-angels';
 
 export const REDFACE_PAY_URL = (
@@ -8,9 +11,13 @@ export const PLATFORM_MERCHANT_ID = (import.meta.env.VITE_PET_ANGELS_MERCHANT_ID
 
 export const STORAGE_BUCKET = import.meta.env.VITE_STORAGE_BUCKET || 'petimages';
 
+export const ADSENSE_CLIENT = (import.meta.env.VITE_ADSENSE_CLIENT || '').trim();
+export const ADSENSE_SLOT_RAIL = (import.meta.env.VITE_ADSENSE_SLOT_RAIL || '').trim();
+export const ADSENSE_SLOT_WRAP = (import.meta.env.VITE_ADSENSE_SLOT_WRAP || '').trim();
+
 export function siteUrl() {
   if (typeof window !== 'undefined') return window.location.origin;
-  return (import.meta.env.VITE_SITE_URL || 'http://localhost:5174').replace(/\/$/, '');
+  return (import.meta.env.VITE_SITE_URL || CANONICAL_SITE_URL).replace(/\/$/, '');
 }
 
 export function zar(amount: number) {

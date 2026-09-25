@@ -3,6 +3,7 @@ import { useState } from 'react';
 import BrandMark from './BrandMark';
 import BottomNav from './BottomNav';
 import CreateSheet from './CreateSheet';
+import AdWrap from './AdWrap';
 import { useAuth } from '../contexts/AuthContext';
 
 const desktopNav = [
@@ -62,13 +63,13 @@ export default function AppShell() {
         </div>
       </header>
       <main className={marketing ? '' : 'pb-nav'}>
-        <Outlet />
+        {marketing ? <Outlet /> : <AdWrap><Outlet /></AdWrap>}
       </main>
       <BottomNav />
       <CreateSheet open={createOpen} onClose={() => setCreateOpen(false)} />
       {!marketing && (
         <footer className="hidden border-t border-pa-sand px-4 py-8 text-center text-xs text-pa-muted md:block">
-          Pet Angels · Payments by{' '}
+          Pet Angels SA · petangelssa.co.za · Payments by{' '}
           <a className="font-semibold text-pa-forest" href="https://www.redfacepay.co.za" target="_blank" rel="noreferrer">
             RedFace Pay
           </a>

@@ -14,6 +14,9 @@ export default function RescuePage() {
         <Link to="/donate/p-cape" className="btn-primary">
           Donate via RedFace Pay
         </Link>
+        <Link to="/map" className="btn-ghost sm:col-span-2">
+          The Shelter Map — South Africa
+        </Link>
       </div>
 
       <h2 className="mt-10 font-display text-xl text-pa-forest">Active cases</h2>

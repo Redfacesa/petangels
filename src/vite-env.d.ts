@@ -8,6 +8,9 @@ interface ImportMetaEnv {
   readonly VITE_SITE_URL: string;
   readonly VITE_REDFACE_SSO: string;
   readonly VITE_STORAGE_BUCKET: string;
+  readonly VITE_ADSENSE_CLIENT: string;
+  readonly VITE_ADSENSE_SLOT_RAIL: string;
+  readonly VITE_ADSENSE_SLOT_WRAP: string;
 }
 
 interface ImportMeta {

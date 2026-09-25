@@ -5,6 +5,7 @@ const actions = [
   { to: '/create?type=report', title: 'Report an animal', hint: 'Starts a rescue case' },
   { to: '/create?type=product', title: 'List a product', hint: 'Food, beds, toys, accessories' },
   { to: '/create?type=service', title: 'List a service', hint: 'Grooming, sitting, transport' },
+  { to: '/care', title: 'Offer pet care nearby', hint: 'Walk, sit, babysit — booked like a ride' },
   { to: '/create?type=animal', title: 'List for adoption / rehome', hint: 'Verified orgs and approved rehomes only' },
   { to: '/create?type=fundraiser', title: 'Start a fundraiser', hint: 'Donations via RedFace Pay' },
 ];

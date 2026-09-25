@@ -20,6 +20,8 @@ import CreatePage from './pages/CreatePage';
 import CartPage from './pages/CartPage';
 import DonatePage from './pages/DonatePage';
 import LegalPage from './pages/LegalPage';
+import CarePage from './pages/CarePage';
+import ShelterMapPage from './pages/ShelterMapPage';
 
 export default function App() {
   return (
@@ -33,6 +35,8 @@ export default function App() {
             <Route path="/discover" element={<DiscoverPage />} />
             <Route path="/marketplace" element={<MarketplacePage />} />
             <Route path="/marketplace/:id" element={<ProductPage />} />
+            <Route path="/care" element={<CarePage />} />
+            <Route path="/map" element={<ShelterMapPage />} />
             <Route path="/rescue" element={<RescuePage />} />
             <Route path="/animals/:id" element={<AnimalPage />} />
             <Route path="/profile" element={<ProfilePage />} />

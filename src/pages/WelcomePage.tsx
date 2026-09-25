@@ -11,9 +11,8 @@ export default function WelcomePage() {
             This is where animal lovers live.
           </h1>
           <p className="mt-5 max-w-2xl text-base text-pa-sage md:text-lg">
-            Pet Angels is not a charity website. It is the community, marketplace, rescue network,
-            and adoption platform for the whole animal ecosystem — with RedFace Pay underneath every
-            payment.
+            Pet Angels SA is the community, marketplace, rescue network, and adoption platform for the
+            whole animal ecosystem — at petangelssa.co.za, with RedFace Pay underneath every payment.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/signup" className="rounded-full bg-pa-cream px-6 py-3 text-sm font-semibold text-pa-forest">
@@ -63,6 +62,24 @@ export default function WelcomePage() {
               tabs="Animals · Stories · Donations · Adoption"
             />
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-12">
+        <h2 className="font-display text-3xl text-pa-ink">Also on the platform</h2>
+        <div className="mt-6 grid gap-3 md:grid-cols-3">
+          <Link to="/care" className="card p-5 hover:border-pa-forest">
+            <p className="font-semibold">Care near you</p>
+            <p className="mt-1 text-sm text-pa-muted">Walk, sit or babysit — book trusted people nearby. Pay with RedFace Pay.</p>
+          </Link>
+          <Link to="/map" className="card p-5 hover:border-pa-forest">
+            <p className="font-semibold">The Shelter Map</p>
+            <p className="mt-1 text-sm text-pa-muted">Every shelter has a story. Put them on the map across South Africa.</p>
+          </Link>
+          <Link to="/marketplace" className="card p-5 hover:border-pa-forest">
+            <p className="font-semibold">Pets, products, services</p>
+            <p className="mt-1 text-sm text-pa-muted">One place for owners — not a second marketplace brand. Animals stay verified.</p>
+          </Link>
         </div>
       </section>
 

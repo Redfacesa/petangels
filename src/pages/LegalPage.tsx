@@ -18,6 +18,12 @@ export default function LegalPage() {
         subscriptions are processed through RedFace Pay. Pet Angels may take a platform/service fee on
         facilitated transactions.
       </p>
+      <h2 className="mt-6 font-semibold text-pa-forest">Advertising</h2>
+      <p className="mt-2">
+        Optional sponsored units appear in the side wrap on large screens, and as a labelled banner at the
+        top or bottom of a page on smaller screens. We do not use pop-ups, interstitials, or ads that cover
+        stories, animals, or checkout. Ads are kept separate from adoption listings.
+      </p>
       <h2 className="mt-6 font-semibold text-pa-forest">Accounts</h2>
       <p className="mt-2">Pet parents, registered businesses, and verified shelters share one community, with different tools.</p>
     </div>

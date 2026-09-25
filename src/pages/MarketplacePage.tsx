@@ -26,6 +26,9 @@ export default function MarketplacePage() {
       <p className="mt-2 text-sm text-pa-muted">
         Products and services checkout on RedFace Pay. Animals are a separate, verified category — not ordinary inventory.
       </p>
+      <Link to="/care" className="mt-4 block rounded-2xl bg-pa-forest px-4 py-3 text-sm font-semibold text-white">
+        Need a walker or sitter now? Open Care near you
+      </Link>
 
       <h2 className="mt-8 font-display text-xl text-pa-forest">Products</h2>
       <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">

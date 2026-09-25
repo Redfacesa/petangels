@@ -13,6 +13,14 @@ export default function DiscoverPage() {
     <div className="mx-auto max-w-5xl px-4 py-6">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Discover</p>
       <h1 className="mt-1 font-display text-3xl text-pa-ink">Animals, people, shops, shelters</h1>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <Link to="/map" className="card p-4 font-semibold text-pa-forest">
+          Open the Shelter Map
+        </Link>
+        <Link to="/care" className="card p-4 font-semibold text-pa-forest">
+          Book pet care nearby
+        </Link>
+      </div>
 
       <Section title="Animals looking for homes">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">

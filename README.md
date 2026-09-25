@@ -1,6 +1,8 @@
-# Pet Angels
+# Pet Angels SA
 
-Vertical social-commerce for the animal ecosystem: community + marketplace + rescue/adoption + payments.
+Site: [www.petangelssa.co.za](https://www.petangelssa.co.za)
+
+Vertical social-commerce for the animal ecosystem: community + marketplace + rescue/adoption + nearby pet care + Shelter Map + payments.
 
 ## Architecture
 
@@ -45,5 +47,29 @@ npm run dev
 ```
 
 Open `http://localhost:5174`.
+
+## Domain
+
+Point `petangelssa.co.za` and `www.petangelssa.co.za` at the host (Vercel/Render). Set `VITE_SITE_URL=https://www.petangelssa.co.za`.
+
+## Ads (AdSense-ready)
+
+Side rails on large screens. Labelled wrap banners on tablet/mobile. No pop-ups, no ads over the feed or checkout. After Google approval, set `VITE_ADSENSE_CLIENT` and slot IDs, then put your `pub-…` line in `public/ads.txt`.
+
+## iOS and Play Store
+
+The site is a PWA (Add to Home Screen). Native store builds wrap the same app with Capacitor:
+
+```bash
+npm install @capacitor/core @capacitor/cli @capacitor/ios @capacitor/android
+npm run build
+npx cap add ios
+npx cap add android
+npx cap sync
+npx cap open ios
+npx cap open android
+```
+
+App ID: `za.co.petangelssa.app`.
 
 Powered by RedFace Pay.
