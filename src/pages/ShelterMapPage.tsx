@@ -12,8 +12,8 @@ export default function ShelterMapPage() {
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">The Shelter Map</p>
       <h1 className="mt-1 font-display text-3xl text-pa-ink">Every shelter has a story. Let’s put them on the map.</h1>
       <p className="mt-2 max-w-2xl text-sm text-pa-muted">
-        Campaign + directory for Pet Angels SA. We visit shelters, tell the story, then pin them here so people can
-        adopt, donate, foster, volunteer or share — without turning animals into ads.
+        Shelters & rescues — curated by Pet Angels. We visit, tell the story, then pin them so people can adopt,
+        donate or volunteer. This directory is editorial, not an open classifieds map.
       </p>
 
       <div className="mt-6 overflow-hidden rounded-3xl border border-pa-sand">

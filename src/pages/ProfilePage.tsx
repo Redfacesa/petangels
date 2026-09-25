@@ -18,12 +18,15 @@ import {
 import { uploadPetImage } from '../lib/media';
 import FeedCard from '../components/FeedCard';
 import ProductCard from '../components/ProductCard';
+import TrustBadges from '../components/TrustBadges';
+import PaymentSetup from '../components/PaymentSetup';
+import { isStaffUser } from '../components/TrustBadges';
 
 type Tab = 'posts' | 'animals' | 'market' | 'donations' | 'purchases' | 'payout';
 
 export default function ProfilePage() {
   const { user, signOut, loading } = useAuth();
-  const { profileById, posts, products, animals, refresh } = useCatalog();
+  const { profileById, posts, products, animals, pets, refresh } = useCatalog();
   const [params] = useSearchParams();
   const paid = params.get('paid') === '1';
   const mine = user ? profileById(user.id) : undefined;
@@ -54,6 +57,7 @@ export default function ProfilePage() {
   const myPosts = posts.filter((p) => p.authorId === user.id);
   const myListings = products.filter((p) => p.sellerId === user.id);
   const myAnimals = animals.filter((a) => a.orgId === user.id);
+  const myPets = pets.filter((p) => p.ownerId === user.id);
   const donationsIn = sales.filter((r) => r.kind === 'donation' || r.kind === 'sponsorship');
   const donationsOut = bought.filter((r) => r.kind === 'donation' || r.kind === 'sponsorship');
   const approved = payout?.status === 'issued';
@@ -183,7 +187,13 @@ export default function ProfilePage() {
               @{handle}
               {city ? ` · ${city}` : ''}
             </p>
-            <button type="button" className="mt-3 text-sm font-semibold text-pa-forest" onClick={() => setTab('payout')}>
+            {mine && <TrustBadges profile={mine} />}
+            {isStaffUser(user.email, mine) && (
+              <Link to="/admin" className="mt-2 inline-block text-xs font-semibold text-pa-forest">
+                Admin
+              </Link>
+            )}
+            <button type="button" className="mt-3 block text-sm font-semibold text-pa-forest" onClick={() => setTab('payout')}>
               Bank & payouts
             </button>
           </div>
@@ -207,7 +217,7 @@ export default function ProfilePage() {
         {(
           [
             ['posts', 'Posts'],
-            ['animals', 'Animals'],
+            ['animals', 'Pets'],
             ['market', 'Marketplace'],
             ['donations', 'Donations'],
             ['purchases', 'Purchases & cart'],
@@ -240,22 +250,33 @@ export default function ProfilePage() {
 
       {tab === 'animals' && (
         <div className="mt-5">
-          {accountType === 'shelter' ? (
-            <Link to="/create?type=animal" className="btn-primary">
-              List an animal for adoption
+          <Link to="/create?type=pet" className="btn-primary">
+            Add a pet
+          </Link>
+          {accountType === 'shelter' && (
+            <Link to="/create?type=animal" className="btn-ghost ml-2">
+              Adoption listing
             </Link>
-          ) : (
-            <p className="text-sm text-pa-muted">
-              Animals here are adoption/rehome only. Pet parents do not sell animals. Shelters list them.
-            </p>
           )}
+          <p className="mt-3 text-sm text-pa-muted">
+            Pets are profiles. Stories attach to them. Adoption is shelter-only — not a product.
+          </p>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            {myAnimals.map((a) => (
-              <Link key={a.id} to={`/animals/${a.id}`} className="card overflow-hidden">
-                <img src={a.image} alt="" className="h-28 w-full object-cover" />
+            {myPets.map((a) => (
+              <Link key={a.id} to={`/pets/${a.id}`} className="card overflow-hidden">
+                {a.photo ? <img src={a.photo} alt="" className="h-28 w-full object-cover" /> : null}
                 <p className="p-3 font-semibold">{a.name}</p>
+                <p className="px-3 pb-3 text-xs capitalize text-pa-muted">{a.status.replaceAll('_', ' ')}</p>
               </Link>
             ))}
+            {myAnimals
+              .filter((a) => !myPets.some((p) => p.id === a.id))
+              .map((a) => (
+                <Link key={a.id} to={`/animals/${a.id}`} className="card overflow-hidden">
+                  <img src={a.image} alt="" className="h-28 w-full object-cover" />
+                  <p className="p-3 font-semibold">{a.name}</p>
+                </Link>
+              ))}
           </div>
         </div>
       )}
@@ -334,6 +355,7 @@ export default function ProfilePage() {
 
       {tab === 'payout' && (
         <div className="mt-5 space-y-6">
+          <PaymentSetup payout={payout} hasLink={Boolean(merchantLink)} />
           <form className="space-y-3" onSubmit={(e) => void onPayout(e)}>
             <h2 className="font-display text-xl">1. Bank details</h2>
             <p className="text-sm text-pa-muted">

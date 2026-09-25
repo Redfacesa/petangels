@@ -28,6 +28,11 @@ export function zar(amount: number) {
   }).format(amount);
 }
 
+export const STAFF_EMAILS = (import.meta.env.VITE_STAFF_EMAILS || '')
+  .split(',')
+  .map((s) => s.trim().toLowerCase())
+  .filter(Boolean);
+
 export function isSsoEnabled() {
   return import.meta.env.VITE_REDFACE_SSO === '1';
 }

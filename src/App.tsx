@@ -24,6 +24,9 @@ import DonatePage from './pages/DonatePage';
 import LegalPage from './pages/LegalPage';
 import CarePage from './pages/CarePage';
 import ShelterMapPage from './pages/ShelterMapPage';
+import PetPage from './pages/PetPage';
+import AdminPage from './pages/AdminPage';
+import InboxPage from './pages/InboxPage';
 
 function Gate({ children }: { children: ReactNode }) {
   return <RequireAuth>{children}</RequireAuth>;
@@ -50,6 +53,9 @@ export default function App() {
             <Route path="/map" element={<Gate><ShelterMapPage /></Gate>} />
             <Route path="/rescue" element={<Gate><RescuePage /></Gate>} />
             <Route path="/animals/:id" element={<Gate><AnimalPage /></Gate>} />
+            <Route path="/pets/:id" element={<Gate><PetPage /></Gate>} />
+            <Route path="/inbox" element={<Gate><InboxPage /></Gate>} />
+            <Route path="/admin" element={<Gate><AdminPage /></Gate>} />
             <Route path="/profile" element={<Gate><ProfilePage /></Gate>} />
             <Route path="/u/:handle" element={<Gate><PublicProfilePage /></Gate>} />
             <Route path="/join/business" element={<Gate><JoinBusinessPage /></Gate>} />

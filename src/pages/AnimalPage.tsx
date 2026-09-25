@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { useCatalog } from '../contexts/CatalogContext';
 import { useAuth } from '../contexts/AuthContext';
 import { checkoutWithRedFacePay } from '../lib/redface-pay';
@@ -6,7 +6,8 @@ import { checkoutWithRedFacePay } from '../lib/redface-pay';
 export default function AnimalPage() {
   const { id } = useParams();
   const { user } = useAuth();
-  const { animalById, profileById } = useCatalog();
+  const { animalById, petById, profileById } = useCatalog();
+  if (id && petById(id)) return <Navigate to={`/pets/${id}`} replace />;
   const animal = id ? animalById(id) : undefined;
   if (!animal) return <p className="p-8 text-center text-pa-muted">Animal not found.</p>;
   const org = profileById(animal.orgId);

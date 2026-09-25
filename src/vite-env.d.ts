@@ -12,6 +12,7 @@ interface ImportMetaEnv {
   readonly VITE_ADSENSE_CLIENT: string;
   readonly VITE_ADSENSE_SLOT_RAIL: string;
   readonly VITE_ADSENSE_SLOT_WRAP: string;
+  readonly VITE_STAFF_EMAILS: string;
 }
 
 interface ImportMeta {

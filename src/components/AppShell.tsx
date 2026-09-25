@@ -51,9 +51,14 @@ export default function AppShell() {
           )}
           <div className="flex items-center gap-2">
             {user ? (
-              <Link to="/profile" className="text-sm font-semibold text-pa-forest">
-                Profile
-              </Link>
+              <>
+                <Link to="/inbox" className="text-sm font-semibold text-pa-muted">
+                  Alerts
+                </Link>
+                <Link to="/profile" className="text-sm font-semibold text-pa-forest">
+                  Profile
+                </Link>
+              </>
             ) : (
               <>
                 <Link to="/login" className="hidden text-sm font-semibold text-pa-muted sm:inline">

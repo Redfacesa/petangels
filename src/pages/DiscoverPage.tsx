@@ -17,8 +17,8 @@ export default function DiscoverPage() {
         <Link to="/map" className="card p-4 font-semibold text-pa-forest">
           Open the Shelter Map
         </Link>
-        <Link to="/care" className="card p-4 font-semibold text-pa-forest">
-          Book pet care nearby
+        <Link to="/rescue#lost" className="card p-4 font-semibold text-pa-forest">
+          Lost & found
         </Link>
       </div>
 
@@ -28,7 +28,7 @@ export default function DiscoverPage() {
         ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
           {looking.map((a) => (
-            <Link key={a.id} to={`/animals/${a.id}`} className="card overflow-hidden">
+            <Link key={a.id} to={`/pets/${a.id}`} className="card overflow-hidden">
               <img src={a.image} alt="" className="h-36 w-full object-cover" />
               <div className="p-3">
                 <p className="font-semibold">{a.name}</p>

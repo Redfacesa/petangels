@@ -29,7 +29,7 @@ export default function ProductPage() {
           {seller.name}
         </Link>
       )}
-      <p className="mt-3 text-xs text-pa-muted">Paid with RedFace Pay. Pet Angels never takes the card details.</p>
+      <p className="mt-3 text-xs text-pa-muted">Secure payment through the seller's payment account.</p>
       {!seller?.redfaceMerchantId && (
         <p className="mt-4 rounded-2xl bg-pa-sand px-4 py-3 text-sm text-pa-muted">
           This seller does not have a merchant / subaccount link yet. An admin issues that after they

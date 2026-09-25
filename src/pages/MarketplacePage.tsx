@@ -23,7 +23,7 @@ export default function MarketplacePage() {
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Marketplace</p>
       <h1 className="mt-1 font-display text-3xl text-pa-ink">For you</h1>
       <p className="mt-2 text-sm text-pa-muted">
-        Products and services checkout on RedFace Pay. Animals are a separate, verified category — not ordinary inventory.
+        Each seller is a mini storefront. Checkout is one seller, one payment account. Animals are never inventory.
       </p>
       <Link to="/care" className="mt-4 block rounded-2xl bg-pa-forest px-4 py-3 text-sm font-semibold text-white">
         Need a walker or sitter now? Open Care near you
@@ -40,7 +40,14 @@ export default function MarketplacePage() {
       )}
       <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
         {goods.map((p) => (
-          <ProductCard key={p.id} product={p} />
+          <div key={p.id}>
+            <ProductCard product={p} />
+            {profileById(p.sellerId) && (
+              <Link to={`/u/${profileById(p.sellerId)!.handle}`} className="mt-1 block text-center text-[11px] font-semibold text-pa-forest">
+                {profileById(p.sellerId)!.name}
+              </Link>
+            )}
+          </div>
         ))}
       </div>
 
@@ -57,7 +64,7 @@ export default function MarketplacePage() {
       {looking.length === 0 && <p className="mt-3 text-sm text-pa-muted">No animals listed for adoption yet.</p>}
       <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
         {looking.map((a) => (
-          <Link key={a.id} to={`/animals/${a.id}`} className="card overflow-hidden">
+          <Link key={a.id} to={`/pets/${a.id}`} className="card overflow-hidden">
             <img src={a.image} alt="" className="h-36 w-full object-cover" />
             <div className="p-3">
               <p className="font-semibold">{a.name}</p>
