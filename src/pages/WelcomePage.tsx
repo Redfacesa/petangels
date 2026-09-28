@@ -49,28 +49,41 @@ export default function WelcomePage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-14">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Inside the app</p>
-        <h2 className="mt-2 font-display text-3xl text-pa-ink">See Pet Angels before you join.</h2>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Shelter map</p>
+        <h2 className="mt-2 font-display text-3xl text-pa-ink">How to find a shelter</h2>
         <p className="mt-2 max-w-2xl text-sm text-pa-muted">
-          Home stories, Discover, Rescue, and your profile — the same screens members use after sign-in.
+          The map is live. Tap a pin, read the shelter, then adopt, volunteer, or donate — not a carousel of screenshots.
         </p>
-        <div className="mt-8 flex gap-4 overflow-x-auto pb-4">
-          {[
-            { src: '/brand/screens/home.jpg', label: 'Home feed' },
-            { src: '/brand/screens/story.jpg', label: 'Stories' },
-            { src: '/brand/screens/discover.jpg', label: 'Discover' },
-            { src: '/brand/screens/rescue.jpg', label: 'Rescue' },
-            { src: '/brand/screens/profile.jpg', label: 'Your profile' },
-          ].map((s) => (
-            <figure key={s.src} className="w-48 shrink-0 sm:w-56">
-              <img
-                src={s.src}
-                alt={s.label}
-                className="h-auto w-full rounded-3xl border border-pa-sand object-cover shadow-sm"
-              />
-              <figcaption className="mt-2 text-center text-xs font-semibold text-pa-muted">{s.label}</figcaption>
-            </figure>
-          ))}
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <div className="overflow-hidden rounded-3xl border border-pa-sand">
+            <iframe
+              title="How the Shelter Map works"
+              className="h-72 w-full md:h-96"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=16.4%2C-35.2%2C33.0%2C-22.0&amp;layer=mapnik&amp;marker=-33.9249%2C18.4241"
+            />
+          </div>
+          <ol className="space-y-4">
+            {[
+              ['Open the map', 'From Discover, Rescue, or the Shelters tab — the same live map members use.'],
+              ['Tap a shelter', 'The pin moves. You see the city, the story, and whether they are a Pet Angels profile.'],
+              ['Go help', 'Open their profile, start an adoption, or donate on their pay URL. Animals are never shop SKUs.'],
+            ].map(([title, body], i) => (
+              <li key={title} className="card flex gap-3 p-4">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-pa-forest text-sm font-bold text-white">
+                  {i + 1}
+                </span>
+                <div>
+                  <p className="font-semibold text-pa-ink">{title}</p>
+                  <p className="mt-1 text-sm text-pa-muted">{body}</p>
+                </div>
+              </li>
+            ))}
+            <li>
+              <AppLink to="/map" className="btn-primary inline-flex">
+                Open the Shelter Map
+              </AppLink>
+            </li>
+          </ol>
         </div>
       </section>
 

@@ -7,6 +7,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
 import ReportControl from './ReportControl';
 import CommentThread from './CommentThread';
+import ConfirmModal from './ConfirmModal';
+import { useToast } from './Toast';
 
 const laneLabel: Record<Post['lane'], string> = {
   community: 'Community',
@@ -25,14 +27,16 @@ function formatCount(n: number) {
   return String(n);
 }
 
-export default function FeedCard({ post }: { post: Post }) {
+export default function FeedCard({ post, onDeleted }: { post: Post; onDeleted?: () => void }) {
   const { user } = useAuth();
   const { profileById, petById, likedPostIds, refresh } = useCatalog();
+  const { showToast } = useToast();
   const author = profileById(post.authorId);
   const pet = post.petId ? petById(post.petId) : undefined;
   const liked = Boolean(user && likedPostIds.includes(post.id));
   const mine = Boolean(user && (post.authorId === user.id || author?.authUserId === user.id || author?.id === user.id));
   const [busy, setBusy] = useState(false);
+  const [askDelete, setAskDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lane = post.lane || 'community';
   const headline = pet ? `${pet.name}’s story` : post.title;
@@ -91,14 +95,7 @@ export default function FeedCard({ post }: { post: Post }) {
             <button
               type="button"
               className="rounded-full px-3 py-1.5 text-xs font-semibold text-pa-rose"
-              onClick={() => {
-                if (!window.confirm('Delete this post? It will leave the feed and your profile.')) return;
-                setBusy(true);
-                void deletePost(post.id)
-                  .then(() => refresh())
-                  .catch((err) => setError(err instanceof Error ? err.message : 'Could not delete'))
-                  .finally(() => setBusy(false));
-              }}
+              onClick={() => setAskDelete(true)}
             >
               Delete
             </button>
@@ -107,6 +104,25 @@ export default function FeedCard({ post }: { post: Post }) {
         {error && <p className="text-xs text-pa-rose">{error}</p>}
         <CommentThread postId={post.id} count={post.comments} />
       </div>
+      <ConfirmModal
+        open={askDelete}
+        title="Delete post?"
+        body="This cannot be undone. The story leaves the feed and your profile."
+        busy={busy}
+        onCancel={() => setAskDelete(false)}
+        onConfirm={() => {
+          setBusy(true);
+          void deletePost(post.id)
+            .then(async () => {
+              await refresh();
+              setAskDelete(false);
+              showToast('Post deleted successfully');
+              onDeleted?.();
+            })
+            .catch((err) => setError(err instanceof Error ? err.message : 'Could not delete'))
+            .finally(() => setBusy(false));
+        }}
+      />
     </article>
   );
 }

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CatalogProvider } from './contexts/CatalogContext';
+import { ToastProvider } from './components/Toast';
 import AppShell from './components/AppShell';
 import RequireAuth from './components/RequireAuth';
 import WelcomePage from './pages/WelcomePage';
@@ -44,6 +45,7 @@ function RootIndex() {
 export default function App() {
   return (
     <AuthProvider>
+      <ToastProvider>
       <CatalogProvider>
       <BrowserRouter>
         <Routes>
@@ -81,6 +83,7 @@ export default function App() {
         </Routes>
       </BrowserRouter>
       </CatalogProvider>
+      </ToastProvider>
     </AuthProvider>
   );
 }

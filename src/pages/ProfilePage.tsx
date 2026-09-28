@@ -29,7 +29,7 @@ type Tab = 'posts' | 'animals' | 'market' | 'donations' | 'purchases' | 'payout'
 
 export default function ProfilePage() {
   const { user, signOut, loading } = useAuth();
-  const { profileById, posts, products, animals, pets, refresh } = useCatalog();
+  const { profileById, posts, products, animals, pets, refresh, lastUpdated } = useCatalog();
   const [params] = useSearchParams();
   const paid = params.get('paid') === '1';
   const mine = user ? profileById(user.id) : undefined;
@@ -218,36 +218,50 @@ export default function ProfilePage() {
         )}
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-5 grid grid-cols-4 gap-2 sm:grid-cols-8">
         {(
           [
-            ['posts', 'Posts'],
-            ['animals', 'Pets'],
-            ['market', 'Marketplace'],
-            ['donations', 'Donations'],
-            ['purchases', 'Purchases & cart'],
-            ['activity', 'Applications'],
-            ['edit', 'Edit profile'],
-            ['payout', 'Bank & payouts'],
+            ['posts', 'Posts', PawIcon],
+            ['animals', 'Pets', PetIcon],
+            ['market', 'Marketplace', ShopIcon],
+            ['donations', 'Donations', HeartIcon],
+            ['purchases', 'Purchases & cart', CartIcon],
+            ['activity', 'Applications', FileIcon],
+            ['edit', 'Edit profile', EditIcon],
+            ['payout', 'Bank & payouts', BankIcon],
           ] as const
-        ).map(([id, label]) => (
+        ).map(([id, label, Icon]) => (
           <button
             key={id}
             type="button"
-            className={`rounded-full px-3 py-1.5 text-xs font-semibold ${tab === id ? 'bg-pa-forest text-white' : 'bg-pa-sand'}`}
             onClick={() => setTab(id)}
+            className={`relative flex flex-col items-center gap-1 rounded-2xl px-1 py-2 ${
+              tab === id ? 'bg-pa-forest text-white' : 'bg-pa-sand text-pa-forest'
+            }`}
           >
-            {label}
+            <Icon />
+            <span className="text-center text-[9px] font-semibold leading-tight">{label}</span>
+            {id === 'activity' && adoptions.length > 0 && (
+              <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-pa-rose px-1 text-[9px] text-white">
+                {adoptions.length}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
       {tab === 'posts' && (
         <div className="mt-5">
-          <Link to="/create?type=story" className="btn-primary">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="font-display text-xl">My posts</h2>
+            <p className="text-[11px] text-pa-muted">
+              Auto refresh
+              {lastUpdated ? ` · ${lastUpdated.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}` : ''}
+            </p>
+          </div>
+          <Link to="/create?type=story" className="btn-primary mt-3">
             New post
           </Link>
-          <p className="mt-3 text-xs text-pa-muted">Tap a block to open the story. Several photos become a carousel.</p>
           <div className="mt-4">
             <PostGrid posts={myPosts} />
           </div>
@@ -570,5 +584,90 @@ function ReceiptList({ rows, empty }: { rows: PayReceipt[]; empty: string }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+function IconWrap({ children }: { children: React.ReactNode }) {
+  return <span className="flex h-7 w-7 items-center justify-center">{children}</span>;
+}
+
+function PawIcon() {
+  return (
+    <IconWrap>
+      <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden>
+        <circle cx="7" cy="8" r="2" />
+        <circle cx="12" cy="6" r="2" />
+        <circle cx="17" cy="8" r="2" />
+        <path d="M12 11c-3.2 0-5.5 2.4-5.5 5.2 0 2 2.3 3.3 5.5 3.3s5.5-1.3 5.5-3.3C17.5 13.4 15.2 11 12 11z" />
+      </svg>
+    </IconWrap>
+  );
+}
+function PetIcon() {
+  return (
+    <IconWrap>
+      <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" aria-hidden>
+        <circle cx="12" cy="13" r="6" />
+        <path d="M8 8c0-2 1.2-3 2.4-3 .8 0 1.2.5 1.6 1.2C12.4 5.5 12.8 5 13.6 5 14.8 5 16 6 16 8" />
+      </svg>
+    </IconWrap>
+  );
+}
+function ShopIcon() {
+  return (
+    <IconWrap>
+      <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" aria-hidden>
+        <path d="M4 9h16l-1 11H5L4 9z" />
+        <path d="M8 9V7a4 4 0 018 0v2" />
+      </svg>
+    </IconWrap>
+  );
+}
+function HeartIcon() {
+  return (
+    <IconWrap>
+      <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" aria-hidden>
+        <path d="M12 20s-7-4.4-7-9.2C5 8 7 6 9.2 6c1.3 0 2.4.7 2.8 1.7C12.4 6.7 13.5 6 14.8 6 17 6 19 8 19 10.8 19 15.6 12 20 12 20z" />
+      </svg>
+    </IconWrap>
+  );
+}
+function CartIcon() {
+  return (
+    <IconWrap>
+      <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" aria-hidden>
+        <path d="M5 6h2l2 11h9l2-8H8" />
+        <circle cx="10" cy="20" r="1.3" fill="currentColor" />
+        <circle cx="18" cy="20" r="1.3" fill="currentColor" />
+      </svg>
+    </IconWrap>
+  );
+}
+function FileIcon() {
+  return (
+    <IconWrap>
+      <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" aria-hidden>
+        <path d="M7 4h7l4 4v12H7z" />
+        <path d="M14 4v4h4" />
+      </svg>
+    </IconWrap>
+  );
+}
+function EditIcon() {
+  return (
+    <IconWrap>
+      <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" aria-hidden>
+        <path d="M5 19h4l10-10-4-4L5 15v4z" />
+      </svg>
+    </IconWrap>
+  );
+}
+function BankIcon() {
+  return (
+    <IconWrap>
+      <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8" aria-hidden>
+        <path d="M4 10h16M6 10v8M10 10v8M14 10v8M18 10v8M3 18h18M12 4l9 6H3z" />
+      </svg>
+    </IconWrap>
   );
 }
