@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { findAnimal, findArticle, findPet, findProduct, findProfile, loadCatalog, emptyCatalog, type Catalog } from '../lib/db';
+import { useAuth } from './AuthContext';
 
 type CatalogValue = Catalog & {
   loading: boolean;
@@ -14,17 +15,20 @@ type CatalogValue = Catalog & {
 const CatalogContext = createContext<CatalogValue | null>(null);
 
 export function CatalogProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [catalog, setCatalog] = useState<Catalog>(emptyCatalog);
   const [loading, setLoading] = useState(true);
 
   async function refresh() {
-    const next = await loadCatalog();
+    const next = await loadCatalog(user?.id);
     setCatalog(next);
   }
 
   useEffect(() => {
+    setLoading(true);
     refresh().finally(() => setLoading(false));
-  }, []);
+    // Reload likes when the signed-in account changes.
+  }, [user?.id]);
 
   const value = useMemo<CatalogValue>(
     () => ({

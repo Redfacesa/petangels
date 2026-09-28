@@ -26,11 +26,12 @@ function formatCount(n: number) {
 
 export default function FeedCard({ post }: { post: Post }) {
   const { user } = useAuth();
-  const { profileById, petById } = useCatalog();
+  const { profileById, petById, likedPostIds, refresh } = useCatalog();
   const author = profileById(post.authorId);
   const pet = post.petId ? petById(post.petId) : undefined;
-  const [liked, setLiked] = useState(false);
-  const extra = liked ? 1 : 0;
+  const liked = Boolean(user && likedPostIds.includes(post.id));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const lane = post.lane || 'community';
   const headline = pet ? `${pet.name}’s story` : post.title;
   const byline = author ? `${author.name} · ${author.city}` : '';
@@ -59,14 +60,23 @@ export default function FeedCard({ post }: { post: Post }) {
       <div className="space-y-2 px-4 py-4">
         {pet && post.title !== headline && <p className="text-xs text-pa-muted">{post.title}</p>}
         <p className="text-sm leading-relaxed text-stone-700">{post.body}</p>
-        <p className="text-sm font-semibold text-pa-rose">♡ {formatCount(post.likes + extra)}</p>
+        <p className="text-sm font-semibold text-pa-rose">♡ {formatCount(post.likes)}</p>
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <button
             type="button"
+            disabled={busy}
             className={`rounded-full px-3 py-1.5 text-xs font-semibold ${liked ? 'bg-pa-rose text-white' : 'bg-pa-sand text-pa-ink'}`}
             onClick={() => {
-              setLiked(true);
-              if (user) void likePost(post.id, user.id);
+              if (!user) {
+                window.location.assign('/login?next=/home');
+                return;
+              }
+              setBusy(true);
+              setError(null);
+              void likePost(post.id, user.id, liked)
+                .then(() => refresh())
+                .catch((err) => setError(err instanceof Error ? err.message : 'Could not save like'))
+                .finally(() => setBusy(false));
             }}
           >
             {liked ? 'Liked' : 'Like'}
@@ -78,6 +88,7 @@ export default function FeedCard({ post }: { post: Post }) {
           ))}
           <ReportControl reporterId={user?.id} targetKind="post" targetId={post.id} />
         </div>
+        {error && <p className="text-xs text-pa-rose">{error}</p>}
         <CommentThread postId={post.id} count={post.comments} />
       </div>
     </article>

@@ -13,7 +13,7 @@ export function isLocalHost(host = currentHost()) {
 }
 
 export function isMarketingHost(host = currentHost()) {
-  return host === MARKETING_HOST;
+  return host === MARKETING_HOST || host === `www.${MARKETING_HOST}`;
 }
 
 export function isAppHost(host = currentHost()) {

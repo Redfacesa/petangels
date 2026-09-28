@@ -24,6 +24,7 @@ export type Profile = {
   stats?: Record<string, number | string>;
   categories?: string[];
   redfaceMerchantId?: string;
+  authUserId?: string;
   trust?: Trust;
 };
 

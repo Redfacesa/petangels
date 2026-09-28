@@ -4,7 +4,7 @@ import BrandMark from '../components/BrandMark';
 import { useAuth } from '../contexts/AuthContext';
 import { saveLocalProfile } from '../lib/store';
 import type { AccountType } from '../lib/types';
-import { upsertMyProfile } from '../lib/db';
+import { uniqueHandle, upsertMyProfile } from '../lib/db';
 import { supabase } from '../lib/supabase';
 
 export default function SignupPage() {
@@ -16,6 +16,7 @@ export default function SignupPage() {
   const next = params.get('next') || '/home';
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [confirmNote, setConfirmNote] = useState<string | null>(null);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -26,7 +27,7 @@ export default function SignupPage() {
     const email = String(fd.get('email') || '');
     const password = String(fd.get('password') || '');
     const city = String(fd.get('city') || '');
-    const handle = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 18) || 'angel';
+    const handle = await uniqueHandle(name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 18) || 'angel');
 
     saveLocalProfile({ displayName: name, handle, city, accountType: type });
 
@@ -42,6 +43,11 @@ export default function SignupPage() {
         setLoading(false);
         return;
       }
+      if (result.needsConfirm) {
+        setLoading(false);
+        setConfirmNote('Check that inbox to confirm the address, then sign in. Each email is its own Pet Angels account.');
+        return;
+      }
       const { data } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
       if (data.user) {
         try {
@@ -52,12 +58,16 @@ export default function SignupPage() {
             accountType: type,
             city,
           });
-        } catch {
-          /* trigger may already have created the profile */
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Account created, but the profile could not be saved. Sign in and open Profile.');
+          setLoading(false);
+          return;
         }
       }
+      setLoading(false);
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
     if (type === 'merchant') {
       navigate('/join/business?onboarded=1');
       return;
@@ -132,6 +142,7 @@ export default function SignupPage() {
           </p>
         )}
         {error && <p className="text-sm text-pa-rose">{error}</p>}
+        {confirmNote && <p className="text-sm text-pa-forest">{confirmNote}</p>}
         <button className="btn-primary w-full" disabled={loading} type="submit">
           {loading ? 'Creating…' : 'Sign up'}
         </button>

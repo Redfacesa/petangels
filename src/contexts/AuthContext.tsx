@@ -1,6 +1,21 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase, supabaseConfigured } from '../lib/supabase';
+import { siteUrl } from '../lib/config';
+
+type AuthValue = {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  configured: boolean;
+  signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signUp: (
+    email: string,
+    password: string,
+    meta?: { full_name?: string; account_type?: string; city?: string; handle?: string },
+  ) => Promise<{ error?: string; needsConfirm?: boolean }>;
+  signOut: () => Promise<void>;
+};
 
 type AuthValue = {
   user: User | null;
@@ -53,10 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       signUp: async (email, password, meta) => {
         if (!supabase) return { error: 'Auth is not configured yet. Add the Pet Angels Supabase publishable key.' };
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: email.trim().toLowerCase(),
           password,
           options: {
+            emailRedirectTo: `${siteUrl()}/auth/callback`,
             data: {
               full_name: meta?.full_name || '',
               account_type: meta?.account_type || 'pet_parent',
@@ -66,7 +82,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             },
           },
         });
-        return error ? { error: error.message } : {};
+        if (error) return { error: error.message };
+        return { needsConfirm: !data.session };
       },
       signOut: async () => {
         if (supabase) await supabase.auth.signOut();

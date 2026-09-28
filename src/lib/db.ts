@@ -41,6 +41,7 @@ function mapProfile(row: Record<string, unknown>): Profile {
     pets: (row.pets as string[]) || [],
     categories: (row.categories as string[]) || [],
     redfaceMerchantId: merchant,
+    authUserId: row.auth_user_id ? String(row.auth_user_id) : undefined,
     trust: emptyTrust(row, Boolean(merchant)),
   };
 }
@@ -180,6 +181,7 @@ export type Catalog = {
   pets: Pet[];
   careOffers: CareOffer[];
   articles: Article[];
+  likedPostIds: string[];
   remote: boolean;
 };
 
@@ -192,12 +194,13 @@ export const emptyCatalog: Catalog = {
   pets: [],
   careOffers: [],
   articles: [],
+  likedPostIds: [],
   remote: false,
 };
 
-export async function loadCatalog(): Promise<Catalog> {
+export async function loadCatalog(viewerId?: string): Promise<Catalog> {
   if (!supabase) return emptyCatalog;
-  const [profiles, posts, listings, animals, cases, pets, care, articles] = await Promise.all([
+  const [profiles, posts, listings, animals, cases, pets, care, articles, likes] = await Promise.all([
     supabase
       .from('pa_profiles')
       .select(
@@ -210,7 +213,22 @@ export async function loadCatalog(): Promise<Catalog> {
     supabase.from('pa_pets_public').select('*').order('created_at', { ascending: false }),
     supabase.from('pa_care_offers').select('*').eq('active', true),
     supabase.from('pa_articles').select('*').order('created_at', { ascending: false }),
+    supabase.from('pa_likes').select('post_id, user_id'),
   ]);
+
+  const likeRows = likes.error ? [] : likes.data || [];
+  const likeCount = new Map<string, number>();
+  const likedPostIds: string[] = [];
+  for (const row of likeRows) {
+    const postId = String(row.post_id);
+    likeCount.set(postId, (likeCount.get(postId) || 0) + 1);
+    if (viewerId && String(row.user_id) === viewerId) likedPostIds.push(postId);
+  }
+
+  function withLikeCounts(list: Post[]) {
+    return list.map((p) => ({ ...p, likes: likeCount.get(p.id) ?? p.likes }));
+  }
+
   if (profiles.error) {
     const retry = await supabase
       .from('pa_profiles')
@@ -219,13 +237,14 @@ export async function loadCatalog(): Promise<Catalog> {
     return {
       ...emptyCatalog,
       profiles: (retry.data || []).map((row) => mapProfile(row as Record<string, unknown>)),
-      posts: (posts.data || []).map((row) => mapPost(row as Record<string, unknown>)),
+      posts: withLikeCounts((posts.data || []).map((row) => mapPost(row as Record<string, unknown>))),
       products: (listings.data || []).map((row) => mapProduct(row as Record<string, unknown>)),
       animals: (animals.data || []).map((row) => mapAnimal(row as Record<string, unknown>)),
       cases: (cases.data || []).map((row) => mapCase(row as Record<string, unknown>)),
       pets: pets.error ? [] : (pets.data || []).map((row) => mapPet(row as Record<string, unknown>)),
       careOffers: care.error ? [] : (care.data || []).map((row) => mapCareOffer(row as Record<string, unknown>)),
       articles: articles.error ? [] : (articles.data || []).map((row) => mapArticle(row as Record<string, unknown>)),
+      likedPostIds,
       remote: true,
     };
   }
@@ -248,20 +267,26 @@ export async function loadCatalog(): Promise<Catalog> {
   const legacyAnimals = (animals.data || []).map((row) => mapAnimal(row as Record<string, unknown>));
   return {
     profiles: (profiles.data || []).map((row) => mapProfile(row as Record<string, unknown>)),
-    posts: (posts.data || []).map((row) => mapPost(row as Record<string, unknown>)),
+    posts: withLikeCounts((posts.data || []).map((row) => mapPost(row as Record<string, unknown>))),
     products: (listings.data || []).map((row) => mapProduct(row as Record<string, unknown>)),
     animals: [...adoptionFromPets, ...legacyAnimals],
     cases: (cases.data || []).map((row) => mapCase(row as Record<string, unknown>)),
     pets: mappedPets,
     careOffers: care.error ? [] : (care.data || []).map((row) => mapCareOffer(row as Record<string, unknown>)),
     articles: articles.error ? [] : (articles.data || []).map((row) => mapArticle(row as Record<string, unknown>)),
+    likedPostIds,
     remote: true,
   };
 }
 
 export function findProfile(catalog: Catalog, idOrHandle: string) {
   const key = idOrHandle.toLowerCase();
-  return catalog.profiles.find((p) => p.id === idOrHandle || p.handle.toLowerCase() === key);
+  return catalog.profiles.find(
+    (p) =>
+      p.id === idOrHandle ||
+      p.authUserId === idOrHandle ||
+      p.handle.toLowerCase() === key,
+  );
 }
 
 export function findProduct(catalog: Catalog, id: string) {
@@ -324,6 +349,18 @@ export async function upsertMyProfile(input: {
     ...row,
   });
   if (error) throw error;
+}
+
+export async function uniqueHandle(base: string) {
+  const cleaned = base.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 18) || 'angel';
+  if (!supabase) return cleaned;
+  let handle = cleaned;
+  for (let i = 0; i < 8; i++) {
+    const { data } = await supabase.from('pa_profiles').select('id').eq('handle', handle).maybeSingle();
+    if (!data) return handle;
+    handle = `${cleaned.slice(0, 14)}${Math.random().toString(36).slice(2, 6)}`;
+  }
+  return `${cleaned.slice(0, 12)}${Date.now().toString(36).slice(-6)}`;
 }
 
 export type PayoutAccount = {
@@ -525,9 +562,15 @@ export async function loadPetPrivate(petId: string): Promise<{ medicalNotes: str
   };
 }
 
-export async function likePost(postId: string, userId: string) {
-  if (!supabase) return;
-  await supabase.from('pa_likes').insert({ post_id: postId, user_id: userId });
+export async function likePost(postId: string, userId: string, unlike = false) {
+  if (!supabase) throw new Error('Database not configured');
+  if (unlike) {
+    const { error } = await supabase.from('pa_likes').delete().eq('post_id', postId).eq('user_id', userId);
+    if (error) throw error;
+    return;
+  }
+  const { error } = await supabase.from('pa_likes').insert({ post_id: postId, user_id: userId });
+  if (error && error.code !== '23505') throw error;
 }
 
 export type FeedComment = {
