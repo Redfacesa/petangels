@@ -29,6 +29,7 @@ import ArticlePage from './pages/ArticlePage';
 import PetPage from './pages/PetPage';
 import AdminPage from './pages/AdminPage';
 import InboxPage from './pages/InboxPage';
+import PostPage from './pages/PostPage';
 import { isMarketingHost } from './lib/hosts';
 
 function Gate({ children }: { children: ReactNode }) {
@@ -65,6 +66,7 @@ export default function App() {
             <Route path="/rescue" element={<Gate><RescuePage /></Gate>} />
             <Route path="/animals/:id" element={<Gate><AnimalPage /></Gate>} />
             <Route path="/pets/:id" element={<Gate><PetPage /></Gate>} />
+            <Route path="/posts/:id" element={<Gate><PostPage /></Gate>} />
             <Route path="/inbox" element={<Gate><InboxPage /></Gate>} />
             <Route path="/admin" element={<Gate><AdminPage /></Gate>} />
             <Route path="/profile" element={<Gate><ProfilePage /></Gate>} />

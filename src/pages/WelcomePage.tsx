@@ -49,6 +49,32 @@ export default function WelcomePage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-14">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Inside the app</p>
+        <h2 className="mt-2 font-display text-3xl text-pa-ink">See Pet Angels before you join.</h2>
+        <p className="mt-2 max-w-2xl text-sm text-pa-muted">
+          Home stories, Discover, Rescue, and your profile — the same screens members use after sign-in.
+        </p>
+        <div className="mt-8 flex gap-4 overflow-x-auto pb-4">
+          {[
+            { src: '/brand/screens/home.jpg', label: 'Home feed' },
+            { src: '/brand/screens/story.jpg', label: 'Stories' },
+            { src: '/brand/screens/discover.jpg', label: 'Discover' },
+            { src: '/brand/screens/rescue.jpg', label: 'Rescue' },
+            { src: '/brand/screens/profile.jpg', label: 'Your profile' },
+          ].map((s) => (
+            <figure key={s.src} className="w-48 shrink-0 sm:w-56">
+              <img
+                src={s.src}
+                alt={s.label}
+                className="h-auto w-full rounded-3xl border border-pa-sand object-cover shadow-sm"
+              />
+              <figcaption className="mt-2 text-center text-xs font-semibold text-pa-muted">{s.label}</figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-14">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">What you can join as</p>
         <h2 className="mt-2 font-display text-3xl text-pa-ink">Three kinds of people. One app.</h2>
         <div className="mt-8 grid gap-5 md:grid-cols-3">

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import FeedCard from '../components/FeedCard';
 import { useCatalog } from '../contexts/CatalogContext';
+import { rankPosts } from '../lib/feed';
 import type { ContentLane } from '../lib/types';
 
 const actions = [
@@ -17,9 +18,10 @@ export default function HomePage() {
   const { posts, loading } = useCatalog();
   const [lane, setLane] = useState<ContentLane | 'all' | 'lost'>('all');
   const shown = useMemo(() => {
-    if (lane === 'all') return posts;
-    if (lane === 'lost') return posts.filter((p) => p.kind === 'lost' || p.kind === 'found');
-    return posts.filter((p) => (p.lane || 'community') === lane);
+    const ranked = rankPosts(posts);
+    if (lane === 'all') return ranked;
+    if (lane === 'lost') return ranked.filter((p) => p.kind === 'lost' || p.kind === 'found');
+    return ranked.filter((p) => (p.lane || 'community') === lane);
   }, [posts, lane]);
 
   return (

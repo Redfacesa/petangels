@@ -19,10 +19,10 @@ import {
   type PayoutAccount,
 } from '../lib/db';
 import { uploadPetImage } from '../lib/media';
-import FeedCard from '../components/FeedCard';
 import ProductCard from '../components/ProductCard';
 import TrustBadges from '../components/TrustBadges';
 import PaymentSetup from '../components/PaymentSetup';
+import PostGrid from '../components/PostGrid';
 import { isStaffUser } from '../components/TrustBadges';
 
 type Tab = 'posts' | 'animals' | 'market' | 'donations' | 'purchases' | 'payout' | 'activity' | 'edit';
@@ -59,7 +59,7 @@ export default function ProfilePage() {
   const city = mine?.city || '';
   const handle = mine?.handle || user.email?.split('@')[0] || 'angel';
   const accountType = (type as 'pet_parent' | 'merchant' | 'shelter') || 'pet_parent';
-  const myPosts = posts.filter((p) => p.authorId === user.id);
+  const myPosts = posts.filter((p) => p.authorId === user.id || p.authorId === mine?.id);
   const myListings = products.filter((p) => p.sellerId === user.id);
   const myAnimals = animals.filter((a) => a.orgId === user.id);
   const myPets = pets.filter((p) => p.ownerId === user.id);
@@ -243,15 +243,14 @@ export default function ProfilePage() {
       </div>
 
       {tab === 'posts' && (
-        <div className="mt-5 space-y-4">
+        <div className="mt-5">
           <Link to="/create?type=story" className="btn-primary">
             New post
           </Link>
-          {myPosts.length === 0 ? (
-            <p className="text-sm text-pa-muted">No posts yet.</p>
-          ) : (
-            myPosts.map((p) => <FeedCard key={p.id} post={p} />)
-          )}
+          <p className="mt-3 text-xs text-pa-muted">Tap a block to open the story. Several photos become a carousel.</p>
+          <div className="mt-4">
+            <PostGrid posts={myPosts} />
+          </div>
         </div>
       )}
 

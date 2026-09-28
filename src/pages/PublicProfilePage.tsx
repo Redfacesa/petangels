@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
-import FeedCard from '../components/FeedCard';
 import TrustBadges from '../components/TrustBadges';
+import PostGrid from '../components/PostGrid';
 import { useCatalog } from '../contexts/CatalogContext';
 import { useAuth } from '../contexts/AuthContext';
 import { checkoutWithRedFacePay } from '../lib/redface-pay';
@@ -138,11 +138,11 @@ export default function PublicProfilePage() {
       )}
 
       {theirPosts.length > 0 && (
-        <section className="mt-8 space-y-4">
+        <section className="mt-8">
           <h2 className="font-display text-xl">Stories</h2>
-          {theirPosts.map((p) => (
-            <FeedCard key={p.id} post={p} />
-          ))}
+          <div className="mt-3">
+            <PostGrid posts={theirPosts} />
+          </div>
         </section>
       )}
     </div>

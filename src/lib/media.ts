@@ -25,7 +25,7 @@ export async function uploadPetImage(userId: string, file: File) {
   const { data: sessionData } = await supabase.auth.getSession();
   const uid = sessionData.session?.user.id || userId;
   if (!sessionData.session) throw new Error('Sign in again, then upload the photo.');
-  const path = `${uid}/${Date.now()}.${extFromFile(file)}`;
+  const path = `${uid}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extFromFile(file)}`;
   const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, {
     cacheControl: '3600',
     upsert: true,

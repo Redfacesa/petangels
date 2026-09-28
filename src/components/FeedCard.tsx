@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import type { Post } from '../lib/types';
 import { useCatalog } from '../contexts/CatalogContext';
-import { likePost } from '../lib/db';
+import ImageCarousel from './ImageCarousel';
+import { likePost, deletePost } from '../lib/db';
 import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
 import ReportControl from './ReportControl';
@@ -30,6 +31,7 @@ export default function FeedCard({ post }: { post: Post }) {
   const author = profileById(post.authorId);
   const pet = post.petId ? petById(post.petId) : undefined;
   const liked = Boolean(user && likedPostIds.includes(post.id));
+  const mine = Boolean(user && (post.authorId === user.id || author?.authUserId === user.id || author?.id === user.id));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lane = post.lane || 'community';
@@ -52,10 +54,8 @@ export default function FeedCard({ post }: { post: Post }) {
           {laneLabel[lane]}
         </span>
       </div>
-      <div className="mt-3 grid gap-1">
-        {post.images.map((src) => (
-          <img key={src} src={src} alt="" className="max-h-80 w-full object-cover" />
-        ))}
+      <div className="mt-3">
+        <ImageCarousel images={post.images} alt={headline} />
       </div>
       <div className="space-y-2 px-4 py-4">
         {pet && post.title !== headline && <p className="text-xs text-pa-muted">{post.title}</p>}
@@ -87,6 +87,22 @@ export default function FeedCard({ post }: { post: Post }) {
             </Link>
           ))}
           <ReportControl reporterId={user?.id} targetKind="post" targetId={post.id} />
+          {mine && (
+            <button
+              type="button"
+              className="rounded-full px-3 py-1.5 text-xs font-semibold text-pa-rose"
+              onClick={() => {
+                if (!window.confirm('Delete this post? It will leave the feed and your profile.')) return;
+                setBusy(true);
+                void deletePost(post.id)
+                  .then(() => refresh())
+                  .catch((err) => setError(err instanceof Error ? err.message : 'Could not delete'))
+                  .finally(() => setBusy(false));
+              }}
+            >
+              Delete
+            </button>
+          )}
         </div>
         {error && <p className="text-xs text-pa-rose">{error}</p>}
         <CommentThread postId={post.id} count={post.comments} />

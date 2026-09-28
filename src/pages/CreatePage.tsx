@@ -29,6 +29,7 @@ export default function CreatePage() {
   const { user } = useAuth();
   const { refresh, profileById, pets } = useCatalog();
   const [done, setDone] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const draft = loadLocalProfile();
   const heading = titles[type] || titles.story;
@@ -52,17 +53,26 @@ export default function CreatePage() {
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (publishing || done) return;
     setError(null);
+    setPublishing(true);
     const fd = new FormData(e.currentTarget);
     const title = String(fd.get('title') || heading);
     const body = String(fd.get('body') || '');
     const amount = Number(fd.get('amount') || 0);
-    const file = fd.get('image') as File | null;
+    const files = [...fd.getAll('image')].filter((f): f is File => f instanceof File && f.size > 0).slice(0, 10);
     const petId = String(fd.get('pet_id') || '') || undefined;
-    let imageUrl = '';
+    const go = (path: string) => {
+      setDone('Completed');
+      window.setTimeout(() => navigate(path, { replace: true }), 900);
+    };
     try {
       if (!user || !authorId) throw new Error('Sign in first');
-      if (file && file.size > 0) imageUrl = await uploadPetImage(user.id, file);
+      const images: string[] = [];
+      for (const file of files) {
+        images.push(await uploadPetImage(user.id, file));
+      }
+      const imageUrl = images[0] || '';
 
       if (type === 'fundraiser' && amount > 0) {
         await checkoutWithRedFacePay({
@@ -86,7 +96,7 @@ export default function CreatePage() {
           coverUrl: imageUrl,
         });
         await refresh();
-        navigate(`/journal/${article.id}`);
+        go(`/journal/${article.id}`);
         return;
       }
 
@@ -116,22 +126,29 @@ export default function CreatePage() {
           petId: pet.id,
           title: type === 'pet' ? `${pet.name}’s story` : title,
           body,
-          images: imageUrl ? [imageUrl] : [],
+          images,
         });
+        await refresh();
+        go(`/pets/${pet.id}`);
+        return;
       } else if (type === 'care') {
-        const kinds = ['walk', 'sit', 'board'].filter((k) => fd.get(k) === 'on');
         await insertCareOffer({
           profileId: authorId,
           name: title,
           city: myProfile?.city || '',
           suburb: String(fd.get('suburb') || ''),
-          kinds: kinds.length ? kinds : ['walk'],
+          kinds: ['walk', 'sit', 'board'].filter((k) => fd.get(k) === 'on').length
+            ? ['walk', 'sit', 'board'].filter((k) => fd.get(k) === 'on')
+            : ['walk'],
           walkZar: Number(fd.get('walk_zar') || 0),
           sitZar: Number(fd.get('sit_zar') || 0),
           overnightZar: Number(fd.get('overnight_zar') || 0),
           bio: body,
           photoUrl: imageUrl,
         });
+        await refresh();
+        go('/care');
+        return;
       } else if (type === 'product' || type === 'service') {
         await insertListing({
           sellerId: authorId,
@@ -142,6 +159,9 @@ export default function CreatePage() {
           imageUrl,
           city: myProfile?.city || draft?.city,
         });
+        await refresh();
+        go('/marketplace');
+        return;
       } else if (type === 'report') {
         await insertRescueCase({
           orgId: authorId,
@@ -150,23 +170,27 @@ export default function CreatePage() {
           summary: body,
           imageUrl,
         });
+        await refresh();
+        go('/rescue');
+        return;
       } else {
         const tagged = myPets.find((p) => p.id === petId);
-        await insertPost({
+        const post = await insertPost({
           authorId,
           kind: 'story',
           lane: 'community',
           petId,
           title: tagged ? `${tagged.name}’s story` : title,
           body,
-          images: imageUrl ? [imageUrl] : [],
+          images,
         });
+        await refresh();
+        go(post ? `/posts/${post.id}` : '/home');
+        return;
       }
-
-      await refresh();
-      setDone('Published on Pet Angels.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not publish');
+      setPublishing(false);
     }
   }
 
@@ -191,6 +215,16 @@ export default function CreatePage() {
         <Link to="/join/rescue" className="btn-primary mt-6">
           Apply as a rescue
         </Link>
+      </div>
+    );
+  }
+
+  if (done) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-20 text-center">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-forest">Done</p>
+        <h1 className="mt-2 font-display text-4xl text-pa-ink">Completed</h1>
+        <p className="mt-3 text-sm text-pa-muted">Your post is on Pet Angels. Opening it now — it will not publish again.</p>
       </div>
     );
   }
@@ -272,9 +306,9 @@ export default function CreatePage() {
         )}
         <div>
           <label className="label" htmlFor="image">
-            Photo
+            Photos (up to 10 — swipe as a carousel)
           </label>
-          <input id="image" name="image" type="file" accept="image/*" className="text-sm" />
+          <input id="image" name="image" type="file" accept="image/*" multiple className="text-sm" />
         </div>
         {(type === 'product' || type === 'service' || type === 'fundraiser') && (
           <div>
@@ -285,9 +319,8 @@ export default function CreatePage() {
           </div>
         )}
         {error && <p className="text-sm text-pa-rose">{error}</p>}
-        {done && <p className="text-sm text-pa-forest">{done}</p>}
-        <button className="btn-primary w-full" type="submit">
-          Publish
+        <button className="btn-primary w-full" type="submit" disabled={publishing}>
+          {publishing ? 'Publishing…' : 'Publish'}
         </button>
       </form>
     </div>

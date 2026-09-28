@@ -484,6 +484,12 @@ export async function insertPost(row: {
   return mapPost(data as Record<string, unknown>);
 }
 
+export async function deletePost(postId: string) {
+  if (!supabase) throw new Error('Database not configured');
+  const { error } = await supabase.from('pa_posts').delete().eq('id', postId);
+  if (error) throw error;
+}
+
 export async function insertArticle(row: {
   authorId: string;
   title: string;
