@@ -1,5 +1,6 @@
 import { ECOSYSTEM_FROM, PLATFORM_MERCHANT_ID, REDFACE_PAY_URL, siteUrl } from './config';
 import type { PayKind } from './types';
+import { openExternalUrl } from './native';
 
 export type { PayKind };
 
@@ -62,7 +63,7 @@ export function buildMerchantSignupUrl() {
 }
 
 export function beginPay(opts: Parameters<typeof buildMerchantPayUrl>[0]) {
-  window.location.href = buildMerchantPayUrl(opts);
+  void openExternalUrl(buildMerchantPayUrl(opts));
 }
 
 export async function checkoutWithRedFacePay(

@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import AdSlot from './AdSlot';
 import { ADSENSE_CLIENT, ADSENSE_SLOT_RAIL, ADSENSE_SLOT_WRAP } from '../lib/config';
+import { isNativeApp } from '../lib/native';
 
 const HIDE = ['/', '/login', '/signup', '/join', '/auth', '/legal'];
 
@@ -12,10 +13,10 @@ function adsAllowed(pathname: string) {
 
 export default function AdWrap({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
-  const show = adsAllowed(pathname);
+  const show = adsAllowed(pathname) && !isNativeApp();
 
   useEffect(() => {
-    if (!ADSENSE_CLIENT || document.getElementById('pa-adsense')) return;
+    if (!ADSENSE_CLIENT || isNativeApp() || document.getElementById('pa-adsense')) return;
     const s = document.createElement('script');
     s.id = 'pa-adsense';
     s.async = true;

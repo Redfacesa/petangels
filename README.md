@@ -97,18 +97,16 @@ Side rails on large screens. Labelled wrap banners on tablet/mobile. No pop-ups,
 
 ## iOS and Play Store
 
-The site is a PWA (Add to Home Screen). Native store builds wrap the same app with Capacitor:
+Native shells use Capacitor (`za.co.petangelssa.app`). Icons: `public/icons/`. Full store steps: `stores/APP_STORE.md`.
 
 ```bash
-npm install @capacitor/core @capacitor/cli @capacitor/ios @capacitor/android
-npm run build
-npx cap add ios
-npx cap add android
-npx cap sync
+npm install
+npm run native:init
 npx cap open ios
 npx cap open android
 ```
 
-App ID: `za.co.petangelssa.app`.
+Privacy URL for both stores: https://app.petangelssa.co.za/legal
 
-Powered by RedFace Pay.
+The website remains a PWA (Add to Home Screen) with PNG icons in the web manifest.
+

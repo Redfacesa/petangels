@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.za.co.petangelssa.app",
+        "paths": ["/home", "/discover", "/marketplace/*", "/rescue", "/map", "/journal/*", "/u/*", "/auth/*", "*"]
+      }
+    ]
+  }
+}
