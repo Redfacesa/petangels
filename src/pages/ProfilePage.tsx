@@ -24,7 +24,9 @@ import TrustBadges from '../components/TrustBadges';
 import PaymentSetup from '../components/PaymentSetup';
 import PostGrid from '../components/PostGrid';
 import Avatar from '../components/Avatar';
+import CountryFlag from '../components/CountryFlag';
 import { parseGender } from '../lib/types';
+import { COUNTRIES, parseCountry } from '../lib/geo';
 import { isStaffUser } from '../components/TrustBadges';
 
 type Tab = 'posts' | 'animals' | 'market' | 'donations' | 'purchases' | 'payout' | 'activity' | 'edit';
@@ -81,6 +83,7 @@ export default function ProfilePage() {
       city,
       avatarUrl: extra?.avatarUrl,
       gender: mine?.gender,
+      country: mine?.country,
     });
   }
 
@@ -148,6 +151,7 @@ export default function ProfilePage() {
         category: String(fd.get('kind') || 'product') === 'service' ? 'Services' : 'Pet accessories',
         imageUrl,
         city,
+        country: mine?.country,
       });
       await refresh();
       setMsg('Listing is on the marketplace. Buyers pay your RedFace URL once it is connected.');
@@ -192,6 +196,12 @@ export default function ProfilePage() {
             <h1 className="font-display text-3xl">{name}</h1>
             <p className="text-sm text-pa-muted">
               @{handle}
+              {mine?.country ? (
+                <>
+                  {' · '}
+                  <CountryFlag code={mine.country} withName />
+                </>
+              ) : null}
               {city ? ` · ${city}` : ''}
             </p>
             {mine && <TrustBadges profile={mine} emailConfirmed={Boolean(user.email_confirmed_at)} />}
@@ -441,6 +451,7 @@ export default function ProfilePage() {
               city: String(fd.get('city') || ''),
               bio: String(fd.get('bio') || ''),
               gender: accountType === 'pet_parent' ? parseGender(fd.get('gender')) : 'unspecified',
+              country: parseCountry(fd.get('country')),
             })
               .then(() => refresh())
               .then(() => setMsg('Profile updated.'))
@@ -449,6 +460,13 @@ export default function ProfilePage() {
         >
           <input name="name" className="input" defaultValue={name} placeholder="Display name" required />
           <input name="city" className="input" defaultValue={city} placeholder="City" />
+          <select name="country" className="input" defaultValue={parseCountry(mine?.country)}>
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
           {accountType === 'pet_parent' && (
             <div>
               <p className="label">Profile character</p>

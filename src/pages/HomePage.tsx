@@ -15,19 +15,40 @@ const actions = [
 ];
 
 export default function HomePage() {
-  const { posts, loading } = useCatalog();
+  const { posts, loading, refreshing, refresh, lastUpdated, place, profileById } = useCatalog();
   const [lane, setLane] = useState<ContentLane | 'all' | 'lost'>('all');
   const shown = useMemo(() => {
-    const ranked = rankPosts(posts);
+    const ranked = rankPosts(posts, {
+      place,
+      authorPlace: (id) => {
+        const p = profileById(id);
+        return p ? { country: p.country, city: p.city } : undefined;
+      },
+    });
     if (lane === 'all') return ranked;
     if (lane === 'lost') return ranked.filter((p) => p.kind === 'lost' || p.kind === 'found');
     return ranked.filter((p) => (p.lane || 'community') === lane);
-  }, [posts, lane]);
+  }, [posts, lane, place, profileById]);
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Pet Angels</p>
-      <h1 className="mt-1 font-display text-3xl text-pa-ink">A community for people, pets, rescues and businesses.</h1>
+      <div className="mt-1 flex items-start justify-between gap-3">
+        <h1 className="font-display text-3xl text-pa-ink">A community for people, pets, rescues and businesses.</h1>
+        <button
+          type="button"
+          className="shrink-0 rounded-full bg-pa-sand px-3 py-2 text-xs font-semibold text-pa-forest"
+          onClick={() => void refresh()}
+          disabled={refreshing}
+        >
+          {refreshing ? 'Updating…' : 'Refresh'}
+        </button>
+      </div>
+      {lastUpdated && (
+        <p className="mt-1 text-[11px] text-pa-muted">
+          Live feed · last update {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </p>
+      )}
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
         {actions.map((a) => (
           <Link key={a.label} to={a.to} className="rounded-2xl bg-pa-forest px-3 py-3 text-center text-xs font-semibold text-white">

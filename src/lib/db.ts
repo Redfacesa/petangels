@@ -14,6 +14,7 @@ import type {
 } from './types';
 import { publicMediaUrl } from './media';
 import { parseGender } from './types';
+import { parseCountry } from './geo';
 
 function emptyTrust(row: Record<string, unknown>, payoutReady: boolean): Trust {
   return {
@@ -36,6 +37,7 @@ function mapProfile(row: Record<string, unknown>): Profile {
     type: row.account_type as Profile['type'],
     bio: String(row.bio || ''),
     city: String(row.city || ''),
+    country: parseCountry(row.country),
     avatar: publicMediaUrl(String(row.avatar_url || '')),
     gender: parseGender(row.gender),
     cover: row.cover_url ? publicMediaUrl(String(row.cover_url)) : undefined,
@@ -95,6 +97,7 @@ function mapProduct(row: Record<string, unknown>): Product {
     category: String(row.category || ''),
     image: publicMediaUrl(String(row.image_url || '')),
     city: row.city ? String(row.city) : undefined,
+    country: parseCountry(row.country),
     featured: Boolean(row.featured),
   };
 }
@@ -107,6 +110,7 @@ function mapAnimal(row: Record<string, unknown>): AnimalListing {
     species: row.species as AnimalListing['species'],
     age: String(row.age || ''),
     city: String(row.city || ''),
+    country: parseCountry(row.country),
     status: row.status as AnimalListing['status'],
     image: publicMediaUrl(String(row.image_url || '')),
     story: String(row.story || ''),
@@ -136,6 +140,7 @@ export function mapPet(row: Record<string, unknown>): Pet {
     breed: String(row.breed || ''),
     age: String(row.age || ''),
     city: String(row.city || ''),
+    country: parseCountry(row.country),
     about: String(row.about || ''),
     status: (row.status as Pet['status']) || 'companion',
     medicalNotes: String(row.medical_notes || ''),
@@ -206,7 +211,7 @@ export async function loadCatalog(viewerId?: string): Promise<Catalog> {
     supabase
       .from('pa_profiles')
       .select(
-        'id, handle, name, account_type, bio, city, avatar_url, cover_url, gender, verified, pets, categories, redface_merchant_id, auth_user_id, is_staff, email_verified, phone_verified, business_verified, shelter_verified, caregiver_verified',
+        'id, handle, name, account_type, bio, city, country, avatar_url, cover_url, gender, verified, pets, categories, redface_merchant_id, auth_user_id, is_staff, email_verified, phone_verified, business_verified, shelter_verified, caregiver_verified',
       ),
     supabase.from('pa_posts').select('*').order('created_at', { ascending: false }),
     supabase.from('pa_listings').select('*'),
@@ -261,6 +266,7 @@ export async function loadCatalog(viewerId?: string): Promise<Catalog> {
       species: p.species,
       age: p.age,
       city: p.city,
+      country: p.country,
       status: p.status === 'adopted' ? 'adopted' : p.status === 'foster_needed' ? 'foster_needed' : 'looking_for_home',
       image: p.photo,
       story: p.about,
@@ -331,6 +337,7 @@ export async function upsertMyProfile(input: {
   bio?: string;
   avatarUrl?: string;
   gender?: Profile['gender'];
+  country?: string;
 }) {
   if (!supabase) throw new Error('Database not configured');
   const row: Record<string, unknown> = {
@@ -342,11 +349,24 @@ export async function upsertMyProfile(input: {
   };
   if (input.avatarUrl) row.avatar_url = input.avatarUrl;
   if (input.gender) row.gender = input.gender;
+  if (input.country) row.country = parseCountry(input.country);
+
+  async function stripUnknown(message: string) {
+    let changed = false;
+    if (row.gender && /gender/i.test(message)) {
+      delete row.gender;
+      changed = true;
+    }
+    if (row.country && /country/i.test(message)) {
+      delete row.country;
+      changed = true;
+    }
+    return changed;
+  }
 
   const update = await supabase.from('pa_profiles').update(row).eq('auth_user_id', input.userId).select('id');
   if (update.error) {
-    if (input.gender && /gender/i.test(update.error.message)) {
-      delete row.gender;
+    if (await stripUnknown(update.error.message)) {
       const retry = await supabase.from('pa_profiles').update(row).eq('auth_user_id', input.userId).select('id');
       if (retry.error) throw retry.error;
       if (retry.data && retry.data.length > 0) return;
@@ -361,8 +381,7 @@ export async function upsertMyProfile(input: {
     ...row,
   });
   if (error) {
-    if (row.gender && /gender/i.test(error.message)) {
-      delete row.gender;
+    if (await stripUnknown(error.message)) {
       const retry = await supabase.from('pa_profiles').insert({
         id: input.userId,
         auth_user_id: input.userId,
@@ -545,6 +564,7 @@ export async function insertPet(row: {
   breed?: string;
   age?: string;
   city?: string;
+  country?: string;
   about?: string;
   status?: Pet['status'];
   photoUrl?: string;
@@ -563,6 +583,7 @@ export async function insertPet(row: {
       breed: row.breed || '',
       age: row.age || '',
       city: row.city || '',
+      country: parseCountry(row.country),
       about: row.about || '',
       status: row.status || 'companion',
       photo_url: row.photoUrl,
@@ -606,6 +627,7 @@ export async function likePost(postId: string, userId: string, unlike = false) {
 export type FeedComment = {
   id: string;
   postId: string;
+  articleId?: string;
   authorId: string;
   parentId?: string;
   body: string;
@@ -615,7 +637,8 @@ export type FeedComment = {
 function mapComment(row: Record<string, unknown>): FeedComment {
   return {
     id: String(row.id),
-    postId: String(row.post_id),
+    postId: String(row.post_id || ''),
+    articleId: row.article_id ? String(row.article_id) : undefined,
     authorId: String(row.author_id),
     parentId: row.parent_id ? String(row.parent_id) : undefined,
     body: String(row.body || ''),
@@ -635,13 +658,40 @@ export async function loadComments(postId: string): Promise<FeedComment[]> {
   return (data || []).map((row) => mapComment(row as Record<string, unknown>));
 }
 
+export async function loadArticleComments(articleId: string): Promise<FeedComment[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('pa_article_comments')
+    .select('id, article_id, author_id, parent_id, body, created_at')
+    .eq('article_id', articleId)
+    .order('created_at', { ascending: true })
+    .limit(200);
+  if (error) return [];
+  return (data || []).map((row) => mapComment(row as Record<string, unknown>));
+}
+
 export async function insertComment(input: {
-  postId: string;
+  postId?: string;
+  articleId?: string;
   authorId: string;
   body: string;
   parentId?: string;
 }) {
   if (!supabase) throw new Error('Database not configured');
+  if (input.articleId) {
+    const { data, error } = await supabase
+      .from('pa_article_comments')
+      .insert({
+        article_id: input.articleId,
+        author_id: input.authorId,
+        parent_id: input.parentId || null,
+        body: input.body.trim(),
+      })
+      .select('id, article_id, author_id, parent_id, body, created_at')
+      .single();
+    if (error) throw error;
+    return mapComment(data as Record<string, unknown>);
+  }
   const { data, error } = await supabase
     .from('pa_comments')
     .insert({
@@ -822,6 +872,12 @@ export async function loadMyNotifications(): Promise<AppNotification[]> {
   }));
 }
 
+export async function countUnreadNotifications(): Promise<number> {
+  if (!supabase) return 0;
+  const { count } = await supabase.from('pa_notifications').select('id', { count: 'exact', head: true }).eq('read', false);
+  return count || 0;
+}
+
 export async function markNotificationsRead() {
   if (!supabase) return;
   await supabase.from('pa_notifications').update({ read: true }).eq('read', false);
@@ -895,6 +951,7 @@ export async function insertListing(row: {
   category: string;
   imageUrl?: string;
   city?: string;
+  country?: string;
 }) {
   if (!supabase) return null;
   const { data, error } = await supabase
@@ -907,6 +964,7 @@ export async function insertListing(row: {
       category: row.category,
       image_url: row.imageUrl,
       city: row.city,
+      country: parseCountry(row.country),
     })
     .select('*')
     .single();
@@ -920,6 +978,7 @@ export async function insertAnimal(row: {
   species: AnimalListing['species'];
   age: string;
   city: string;
+  country?: string;
   story: string;
   imageUrl?: string;
 }) {
@@ -932,6 +991,7 @@ export async function insertAnimal(row: {
       species: row.species,
       age: row.age,
       city: row.city,
+      country: parseCountry(row.country),
       story: row.story,
       image_url: row.imageUrl,
       status: 'looking_for_home',

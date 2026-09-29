@@ -8,6 +8,7 @@ export const profiles: Profile[] = [
     type: 'pet_parent',
     bio: 'Pet parent in Cape Town. Bruno and Luna run the house.',
     city: 'Cape Town',
+    country: 'ZA',
     avatar:
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=240&q=80',
     pets: ['Bruno', 'Luna'],
@@ -20,6 +21,7 @@ export const profiles: Profile[] = [
     type: 'merchant',
     bio: 'Neighbourhood pet store — food, toys, beds, and grooming.',
     city: 'Cape Town',
+    country: 'ZA',
     avatar:
       'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=240&q=80',
     categories: ['Food', 'Toys', 'Beds', 'Grooming'],
@@ -33,6 +35,7 @@ export const profiles: Profile[] = [
     type: 'shelter',
     bio: 'Verified rescue organisation. We rehome, foster, and fundraise for animals in need.',
     city: 'Cape Town',
+    country: 'ZA',
     avatar:
       'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?auto=format&fit=crop&w=240&q=80',
     verified: true,
@@ -45,6 +48,7 @@ export const profiles: Profile[] = [
     type: 'merchant',
     bio: 'Safe animal transportation across the Western Cape.',
     city: 'Cape Town',
+    country: 'ZA',
     avatar:
       'https://images.unsplash.com/photo-1444212477490-ca407925329e?auto=format&fit=crop&w=240&q=80',
     categories: ['Pet transport'],
@@ -175,6 +179,7 @@ export const products: Product[] = [
     fromPrice: true,
     category: 'Grooming',
     city: 'Cape Town',
+    country: 'ZA',
     image: 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=700&q=80',
   },
   {
@@ -186,6 +191,7 @@ export const products: Product[] = [
     fromPrice: true,
     category: 'Pet transport',
     city: 'Cape Town',
+    country: 'ZA',
     image: 'https://images.unsplash.com/photo-1444212477490-ca407925329e?auto=format&fit=crop&w=700&q=80',
   },
 ];
@@ -198,6 +204,7 @@ export const animals: AnimalListing[] = [
     species: 'dog',
     age: '3 years',
     city: 'Cape Town',
+    country: 'ZA',
     status: 'looking_for_home',
     image: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=800&q=80',
     story: 'Rescued three weeks ago. Gentle, house-trained, and recovering well. Adoption is verified through Cape Animal Rescue — not an open classifieds listing.',
@@ -210,6 +217,7 @@ export const animals: AnimalListing[] = [
     species: 'cat',
     age: '8 months',
     city: 'Cape Town',
+    country: 'ZA',
     status: 'looking_for_home',
     image: 'https://images.unsplash.com/photo-1519052537078-e6302a4968d4?auto=format&fit=crop&w=800&q=80',
     story: 'Playful indoor kitten. Vaccinated. Rehoming only through a verified rescue organisation.',
@@ -222,6 +230,7 @@ export const animals: AnimalListing[] = [
     species: 'dog',
     age: '2 years',
     city: 'Cape Town',
+    country: 'ZA',
     status: 'adopted',
     image: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=800&q=80',
     story: 'Adopted. Her story stays on the network so the next Bruno has a chance.',
@@ -234,6 +243,7 @@ export const rescueCases: RescueCase[] = [
     id: 'rc-1',
     title: 'Injured stray, Sea Point promenade',
     city: 'Cape Town',
+    country: 'ZA',
     urgency: 'high',
     summary: 'Witness report. Needs transport to vet and overnight holding.',
     image: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=800&q=80',
@@ -243,6 +253,7 @@ export const rescueCases: RescueCase[] = [
     id: 'rc-2',
     title: 'Litter of 6 kittens, Khayelitsha',
     city: 'Cape Town',
+    country: 'ZA',
     urgency: 'medium',
     summary: 'Foster and feeding support requested. Mother is friendly.',
     image: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=800&q=80',

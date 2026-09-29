@@ -12,7 +12,7 @@ type AuthValue = {
   signUp: (
     email: string,
     password: string,
-    meta?: { full_name?: string; account_type?: string; city?: string; handle?: string; gender?: string },
+    meta?: { full_name?: string; account_type?: string; city?: string; handle?: string; gender?: string; country?: string },
   ) => Promise<{ error?: string; needsConfirm?: boolean }>;
   signOut: () => Promise<void>;
 };
@@ -65,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               city: meta?.city || '',
               handle: meta?.handle || '',
               gender: meta?.gender || 'unspecified',
+              country: meta?.country || 'ZA',
               ecosystem_from: 'pet-angels',
             },
           },

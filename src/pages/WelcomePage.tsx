@@ -22,8 +22,8 @@ export default function WelcomePage() {
             South Africa, meet your animals.
           </h1>
           <p className="mt-5 max-w-xl text-base text-pa-sage md:text-lg">
-            Pet Angels SA is where pet parents, shops and shelters live together. The public page is this
-            story. The feed, marketplace, rescue and care app open after you sign in.
+            Pet Angels SA is where pet parents, shops and shelters live together. Anyone can read the
+            journal and browse the marketplace. Sign up to comment, post, pay, and track orders.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             {user ? (
@@ -157,18 +157,21 @@ export default function WelcomePage() {
           <img src={RESCUE} alt="Rescue puppy" className="h-64 w-full object-cover md:h-full" />
         </div>
         <div className="flex flex-col justify-center py-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Inside the app (members)</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Open to the public · richer with an account</p>
           <ul className="mt-4 space-y-3 text-sm text-stone-700">
-            <li>Home feed of stories, recoveries and adoptions</li>
-            <li>Marketplace for products and services</li>
+            <li>Journal — anyone can read; sign up to comment or write</li>
+            <li>Marketplace — anyone can browse; sign up to pay and track orders</li>
+            <li>Home feed — ranked by new posts, conversation, and your country</li>
             <li>Care near you — walk, sit, babysit</li>
             <li>Rescue cases and the live Shelter Map</li>
-            <li>Journal — articles about animals</li>
-            <li>Your profile, animals, orders and donations</li>
+            <li>Your profile, animals, orders, notifications and donations</li>
           </ul>
           <div className="mt-8 flex flex-wrap gap-3">
             <AppLink to="/signup" className="btn-primary w-fit">
-              Create an account to enter
+              Create an account
+            </AppLink>
+            <AppLink to="/marketplace" className="rounded-full border border-pa-forest px-6 py-3 text-sm font-semibold text-pa-forest">
+              Browse marketplace
             </AppLink>
             <AppLink to="/map" className="rounded-full border border-pa-forest px-6 py-3 text-sm font-semibold text-pa-forest">
               Find shelters

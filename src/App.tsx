@@ -59,24 +59,24 @@ export default function App() {
 
             <Route path="/home" element={<Gate><HomePage /></Gate>} />
             <Route path="/discover" element={<Gate><DiscoverPage /></Gate>} />
-            <Route path="/marketplace" element={<Gate><MarketplacePage /></Gate>} />
-            <Route path="/marketplace/:id" element={<Gate><ProductPage /></Gate>} />
+            <Route path="/marketplace" element={<MarketplacePage />} />
+            <Route path="/marketplace/:id" element={<ProductPage />} />
             <Route path="/care" element={<Gate><CarePage /></Gate>} />
             <Route path="/map" element={<ShelterMapPage />} />
             <Route path="/journal" element={<JournalPage />} />
             <Route path="/journal/:id" element={<ArticlePage />} />
             <Route path="/rescue" element={<Gate><RescuePage /></Gate>} />
-            <Route path="/animals/:id" element={<Gate><AnimalPage /></Gate>} />
-            <Route path="/pets/:id" element={<Gate><PetPage /></Gate>} />
+            <Route path="/animals/:id" element={<AnimalPage />} />
+            <Route path="/pets/:id" element={<PetPage />} />
             <Route path="/posts/:id" element={<Gate><PostPage /></Gate>} />
             <Route path="/inbox" element={<Gate><InboxPage /></Gate>} />
             <Route path="/admin" element={<Gate><AdminPage /></Gate>} />
             <Route path="/profile" element={<Gate><ProfilePage /></Gate>} />
-            <Route path="/u/:handle" element={<Gate><PublicProfilePage /></Gate>} />
+            <Route path="/u/:handle" element={<PublicProfilePage />} />
             <Route path="/join/business" element={<Gate><JoinBusinessPage /></Gate>} />
             <Route path="/join/rescue" element={<Gate><JoinRescuePage /></Gate>} />
             <Route path="/create" element={<Gate><CreatePage /></Gate>} />
-            <Route path="/cart" element={<Gate><CartPage /></Gate>} />
+            <Route path="/cart" element={<CartPage />} />
             <Route path="/donate/:orgId" element={<Gate><DonatePage /></Gate>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

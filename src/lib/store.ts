@@ -9,6 +9,7 @@ export type LocalProfileDraft = {
   displayName: string;
   handle: string;
   city: string;
+  country?: string;
   accountType: AccountType;
   businessName?: string;
 };

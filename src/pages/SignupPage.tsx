@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { saveLocalProfile } from '../lib/store';
 import type { AccountType } from '../lib/types';
 import { parseGender } from '../lib/types';
+import { COUNTRIES, parseCountry } from '../lib/geo';
 import { uniqueHandle, upsertMyProfile } from '../lib/db';
 import { supabase } from '../lib/supabase';
 
@@ -28,10 +29,11 @@ export default function SignupPage() {
     const email = String(fd.get('email') || '');
     const password = String(fd.get('password') || '');
     const city = String(fd.get('city') || '');
+    const country = parseCountry(fd.get('country'));
     const gender = type === 'pet_parent' ? parseGender(fd.get('gender')) : 'unspecified';
     const handle = await uniqueHandle(name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 18) || 'angel');
 
-    saveLocalProfile({ displayName: name, handle, city, accountType: type });
+    saveLocalProfile({ displayName: name, handle, city, country, accountType: type });
 
     if (configured) {
       const result = await signUp(email, password, {
@@ -40,6 +42,7 @@ export default function SignupPage() {
         city,
         handle,
         gender,
+        country,
       });
       if (result.error) {
         setError(result.error);
@@ -61,6 +64,7 @@ export default function SignupPage() {
             accountType: type,
             city,
             gender,
+            country,
           });
         } catch (err) {
           setError(err instanceof Error ? err.message : 'Account created, but the profile could not be saved. Sign in and open Profile.');
@@ -128,6 +132,18 @@ export default function SignupPage() {
           </label>
           <input id="city" name="city" className="input" defaultValue="Cape Town" required />
         </div>
+        <div>
+          <label className="label" htmlFor="country">
+            Country
+          </label>
+          <select id="country" name="country" className="input" defaultValue="ZA" required>
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
         {type === 'pet_parent' && (
           <div>
             <p className="label">I am</p>
@@ -170,7 +186,7 @@ export default function SignupPage() {
 
       <p className="mt-6 text-center text-sm text-pa-muted">
         Already here?{' '}
-        <Link to="/login" className="font-semibold text-pa-forest">
+        <Link to={`/login${next && next !== '/home' ? `?next=${encodeURIComponent(next)}` : ''}`} className="font-semibold text-pa-forest">
           Sign in
         </Link>
       </p>

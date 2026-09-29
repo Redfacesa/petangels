@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { uniqueHandle, upsertMyProfile } from '../lib/db';
 import type { AccountType } from '../lib/types';
 import { parseGender } from '../lib/types';
+import { parseCountry } from '../lib/geo';
 
 export default function AuthCallbackPage() {
   const [params] = useSearchParams();
@@ -42,6 +43,7 @@ export default function AuthCallbackPage() {
               accountType: type,
               city: String(meta.city || ''),
               gender: parseGender(meta.gender),
+              country: parseCountry(meta.country),
             });
           } catch {
             /* trigger may already have created the row */

@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import FeedCard from '../components/FeedCard';
 import TrustBadges, { isStaffUser } from '../components/TrustBadges';
 import { loadPetPrivate, applyToAdopt } from '../lib/db';
+import CountryFlag from '../components/CountryFlag';
 
 const statusLabel: Record<string, string> = {
   companion: 'Family pet',
@@ -39,7 +40,7 @@ export default function PetPage() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       {pet.photo && <img src={pet.photo} alt="" className="h-72 w-full rounded-3xl object-cover" />}
       <p className="mt-4 text-xs font-bold uppercase tracking-wider text-pa-forest">
-        {statusLabel[pet.status] || pet.status} · {pet.city}
+        {statusLabel[pet.status] || pet.status} · {pet.city} {pet.country ? <CountryFlag code={pet.country} /> : null}
       </p>
       <h1 className="font-display text-4xl">{pet.name}</h1>
       <p className="text-sm text-pa-muted">
@@ -50,7 +51,7 @@ export default function PetPage() {
       {owner && (
         <div className="mt-4">
           <Link to={`/u/${owner.handle}`} className="font-semibold">
-            Owner: {owner.name}
+            Owner: {owner.name} <CountryFlag code={owner.country} />
           </Link>
           <TrustBadges profile={owner} />
         </div>
@@ -69,6 +70,11 @@ export default function PetPage() {
       )}
       {pet.status === 'looking_for_home' && user && user.id !== pet.ownerId && (
         <AdoptionForm petId={pet.id} applicantId={user.id} />
+      )}
+      {pet.status === 'looking_for_home' && !user && (
+        <Link to={`/signup?next=${encodeURIComponent(`/pets/${pet.id}`)}`} className="btn-primary mt-6 inline-block">
+          Sign up to apply
+        </Link>
       )}
       {pet.status === 'looking_for_home' && (
         <p className="mt-4 rounded-2xl bg-pa-sand p-4 text-xs text-pa-muted">

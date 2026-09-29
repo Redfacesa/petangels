@@ -1,12 +1,16 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
+import RegionBar from '../components/RegionBar';
 import { useCatalog } from '../contexts/CatalogContext';
+import { sortByRegion } from '../lib/geo';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function MarketplacePage() {
   const [params] = useSearchParams();
   const seller = params.get('seller');
-  const { products, animals, profileById } = useCatalog();
+  const { user } = useAuth();
+  const { products, animals, profileById, place, setPlace } = useCatalog();
   const catalog = useMemo(() => {
     if (!seller) return products;
     return products.filter((p) => {
@@ -14,28 +18,69 @@ export default function MarketplacePage() {
       return shop?.handle === seller || p.sellerId === seller;
     });
   }, [seller, products, profileById]);
-  const goods = catalog.filter((p) => p.kind === 'product');
-  const services = catalog.filter((p) => p.kind === 'service');
-  const looking = animals.filter((a) => a.status !== 'adopted');
+  const goods = sortByRegion(
+    catalog.filter((p) => p.kind === 'product').map((p) => {
+      const shop = profileById(p.sellerId);
+      return { ...p, country: p.country || shop?.country, city: p.city || shop?.city };
+    }),
+    place,
+  );
+  const services = sortByRegion(
+    catalog.filter((p) => p.kind === 'service').map((p) => {
+      const shop = profileById(p.sellerId);
+      return { ...p, country: p.country || shop?.country, city: p.city || shop?.city };
+    }),
+    place,
+  );
+  const looking = sortByRegion(
+    animals
+      .filter((a) => a.status !== 'adopted')
+      .map((a) => {
+        const org = profileById(a.orgId);
+        return { ...a, country: a.country || org?.country, city: a.city || org?.city || a.city };
+      }),
+    place,
+  );
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Marketplace</p>
       <h1 className="mt-1 font-display text-3xl text-pa-ink">For you</h1>
       <p className="mt-2 text-sm text-pa-muted">
-        Each seller is a mini storefront. Checkout is one seller, one payment account. Animals are never inventory.
+        Browse without an account. Checkout needs a Pet Angels login so you can track the order. Animals are
+        adoption/rehome in your region — never inventory.
       </p>
-      <Link to="/care" className="mt-4 block rounded-2xl bg-pa-forest px-4 py-3 text-sm font-semibold text-white">
-        Need a walker or sitter now? Open Care near you
-      </Link>
+      <div className="mt-4">
+        <RegionBar place={place} onChange={setPlace} />
+      </div>
+      {!user && (
+        <p className="mt-3 text-xs text-pa-muted">
+          Fill the cart as a guest, then{' '}
+          <Link to="/signup?next=/cart" className="font-semibold text-pa-forest">
+            create an account
+          </Link>{' '}
+          to pay and follow the order.
+        </p>
+      )}
+      {user && (
+        <Link to="/care" className="mt-4 block rounded-2xl bg-pa-forest px-4 py-3 text-sm font-semibold text-white">
+          Need a walker or sitter now? Open Care near you
+        </Link>
+      )}
 
-      <h2 className="mt-8 font-display text-xl text-pa-forest">Products</h2>
+      <h2 className="mt-8 font-display text-xl text-pa-forest">Products near you</h2>
       {goods.length === 0 && (
         <p className="mt-3 text-sm text-pa-muted">
           No products yet.{' '}
-          <Link to="/create?type=product" className="font-semibold text-pa-forest">
-            List something
-          </Link>
+          {user ? (
+            <Link to="/create?type=product" className="font-semibold text-pa-forest">
+              List something
+            </Link>
+          ) : (
+            <Link to="/signup?next=/create?type=product" className="font-semibold text-pa-forest">
+              Join to list
+            </Link>
+          )}
         </p>
       )}
       <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -59,7 +104,7 @@ export default function MarketplacePage() {
         ))}
       </div>
 
-      <h2 className="mt-10 font-display text-xl text-pa-forest">Animals looking for homes</h2>
+      <h2 className="mt-10 font-display text-xl text-pa-forest">Animals looking for homes nearby</h2>
       <p className="mt-1 text-xs text-pa-muted">Verified rescue / approved rehome only. No open animal trading.</p>
       {looking.length === 0 && <p className="mt-3 text-sm text-pa-muted">No animals listed for adoption yet.</p>}
       <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">

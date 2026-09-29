@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import type { Product } from '../lib/types';
 import { useCatalog } from '../contexts/CatalogContext';
 import { zar } from '../lib/config';
+import CountryFlag from './CountryFlag';
 
 export default function ProductCard({ product }: { product: Product }) {
   const { profileById } = useCatalog();
@@ -19,6 +20,7 @@ export default function ProductCard({ product }: { product: Product }) {
           {zar(product.price)}
         </p>
         <p className="mt-1 text-xs text-pa-muted">
+          <CountryFlag code={product.country || seller?.country} />{' '}
           {seller?.name}
           {product.city ? ` · ${product.city}` : ''}
         </p>

@@ -3,6 +3,7 @@ import { useCatalog } from '../contexts/CatalogContext';
 import { useAuth } from '../contexts/AuthContext';
 import { checkoutWithRedFacePay } from '../lib/redface-pay';
 import Avatar from '../components/Avatar';
+import CountryFlag from '../components/CountryFlag';
 
 export default function AnimalPage() {
   const { id } = useParams();
@@ -27,7 +28,7 @@ export default function AnimalPage() {
       {org && (
         <Link to={`/u/${org.handle}`} className="mt-4 inline-flex items-center gap-2 font-semibold">
           <Avatar profile={org} className="h-8 w-8" />
-          {org.name}
+          {org.name} <CountryFlag code={org.country} />
         </Link>
       )}
       <p className="mt-4 rounded-2xl bg-pa-sand/70 p-4 text-xs text-pa-muted">
@@ -39,6 +40,7 @@ export default function AnimalPage() {
           Start adoption enquiry
         </Link>
         {org?.redfaceMerchantId ? (
+          user ? (
           <button
             type="button"
             className="btn-rose"
@@ -49,13 +51,18 @@ export default function AnimalPage() {
                 label: `Pet Angels · Support ${animal.name}`,
                 kind: 'donation',
                 returnPath: `/animals/${animal.id}?donated=1`,
-                payerId: user?.id,
+                payerId: user.id,
                 payeeProfileId: org.id,
               })
             }
           >
             Sponsor {animal.name}
           </button>
+          ) : (
+            <Link to={`/signup?next=${encodeURIComponent(`/animals/${animal.id}`)}`} className="btn-rose">
+              Sign up to sponsor
+            </Link>
+          )
         ) : (
           <p className="text-sm text-pa-muted">Sponsorship opens after this shelter has an issued merchant link.</p>
         )}

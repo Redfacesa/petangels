@@ -1,8 +1,9 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import CreateSheet from './CreateSheet';
+import { useAuth } from '../contexts/AuthContext';
 
-const tabs = [
+const memberTabs = [
   { to: '/home', label: 'Home', icon: '⌂' },
   { to: '/discover', label: 'Discover', icon: '◎' },
   { to: '/marketplace', label: 'Market', icon: '▣' },
@@ -10,7 +11,15 @@ const tabs = [
   { to: '/profile', label: 'You', icon: '○' },
 ];
 
+const guestTabs = [
+  { to: '/journal', label: 'Journal', icon: '✉' },
+  { to: '/marketplace', label: 'Market', icon: '▣' },
+  { to: '/map', label: 'Map', icon: '⌖' },
+  { to: '/signup', label: 'Join', icon: '+' },
+];
+
 export default function BottomNav() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const loc = useLocation();
   const hide =
@@ -23,24 +32,28 @@ export default function BottomNav() {
     loc.pathname.startsWith('/auth');
   if (hide) return null;
 
+  const tabs = user ? memberTabs : guestTabs;
+
   return (
     <>
       <nav
         className="fixed inset-x-0 bottom-0 z-40 border-t border-pa-sand bg-pa-paper/95 backdrop-blur md:hidden"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <div className="relative grid grid-cols-5 px-1 pt-7">
+        <div className={`relative grid px-1 ${user ? 'grid-cols-5 pt-7' : 'grid-cols-4 pt-2'}`}>
           {tabs.map((t) => (
             <Tab key={t.to} {...t} />
           ))}
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="absolute left-1/2 top-0 z-10 flex h-12 w-12 -translate-x-1/2 -translate-y-[70%] items-center justify-center rounded-full bg-pa-forest text-2xl text-white shadow-card ring-4 ring-pa-cream"
-            aria-label="Create"
-          >
-            +
-          </button>
+          {user && (
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="absolute left-1/2 top-0 z-10 flex h-12 w-12 -translate-x-1/2 -translate-y-[70%] items-center justify-center rounded-full bg-pa-forest text-2xl text-white shadow-card ring-4 ring-pa-cream"
+              aria-label="Create"
+            >
+              +
+            </button>
+          )}
         </div>
       </nav>
       <CreateSheet open={open} onClose={() => setOpen(false)} />

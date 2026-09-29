@@ -7,6 +7,7 @@ import { useCatalog } from '../contexts/CatalogContext';
 import { useAuth } from '../contexts/AuthContext';
 import { checkoutWithRedFacePay } from '../lib/redface-pay';
 import Avatar from '../components/Avatar';
+import CountryFlag from '../components/CountryFlag';
 
 export default function PublicProfilePage() {
   const { handle } = useParams();
@@ -35,9 +36,16 @@ export default function PublicProfilePage() {
         <div className="flex items-start gap-4">
           <Avatar profile={profile} className="h-20 w-20" />
           <div>
-            <h1 className="font-display text-3xl">{profile.name}</h1>
+            <h1 className="font-display text-3xl">
+              {profile.name} <CountryFlag code={profile.country} />
+            </h1>
             <p className="text-sm text-pa-forest">{role}</p>
             <TrustBadges profile={profile} />
+            <p className="mt-2 text-sm text-pa-muted">
+              {profile.city}
+              {profile.country ? ` · ` : ''}
+              {profile.country ? <CountryFlag code={profile.country} withName /> : null}
+            </p>
             <p className="mt-2 text-sm text-pa-muted">{profile.bio}</p>
             {profile.categories && profile.categories.length > 0 && (
               <p className="mt-2 text-sm">🐾 {profile.categories.join(' · ')}</p>
@@ -45,23 +53,29 @@ export default function PublicProfilePage() {
           </div>
         </div>
         {profile.redfaceMerchantId ? (
-          <button
-            type="button"
-            className="btn-rose mt-5"
-            onClick={() =>
-              void checkoutWithRedFacePay({
-                merchantId: profile.redfaceMerchantId,
-                amountZar: 200,
-                label: `${isShop ? 'Buy from' : 'Support'} ${profile.name}`,
-                kind: isShop ? 'product' : 'donation',
-                returnPath: `/u/${profile.handle}?paid=1`,
-                payerId: user?.id,
-                payeeProfileId: profile.id,
-              })
-            }
-          >
-            {isShop ? `Buy from ${profile.name}` : 'Donate via their payment account'}
-          </button>
+          user ? (
+            <button
+              type="button"
+              className="btn-rose mt-5"
+              onClick={() =>
+                void checkoutWithRedFacePay({
+                  merchantId: profile.redfaceMerchantId,
+                  amountZar: 200,
+                  label: `${isShop ? 'Buy from' : 'Support'} ${profile.name}`,
+                  kind: isShop ? 'product' : 'donation',
+                  returnPath: `/u/${profile.handle}?paid=1`,
+                  payerId: user.id,
+                  payeeProfileId: profile.id,
+                })
+              }
+            >
+              {isShop ? `Buy from ${profile.name}` : 'Donate via their payment account'}
+            </button>
+          ) : (
+            <Link to={`/signup?next=${encodeURIComponent(`/u/${profile.handle}`)}`} className="btn-rose mt-5 inline-block">
+              Sign up to buy or donate
+            </Link>
+          )
         ) : (
           <p className="mt-5 text-sm text-pa-muted">Secure payment through the seller's payment account — once setup is complete.</p>
         )}

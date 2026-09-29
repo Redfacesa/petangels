@@ -2,10 +2,18 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCatalog } from '../contexts/CatalogContext';
-import { insertComment, loadComments, type FeedComment } from '../lib/db';
+import { loadComments, loadArticleComments, insertComment, type FeedComment } from '../lib/db';
 import Avatar from './Avatar';
 
-export default function CommentThread({ postId, count }: { postId: string; count: number }) {
+export default function CommentThread({
+  postId,
+  articleId,
+  count,
+}: {
+  postId?: string;
+  articleId?: string;
+  count?: number;
+}) {
   const { user } = useAuth();
   const { profileById } = useCatalog();
   const [open, setOpen] = useState(false);
@@ -16,13 +24,14 @@ export default function CommentThread({ postId, count }: { postId: string; count
   const [busy, setBusy] = useState(false);
 
   async function refresh() {
-    setRows(await loadComments(postId));
+    if (articleId) setRows(await loadArticleComments(articleId));
+    else if (postId) setRows(await loadComments(postId));
   }
 
   useEffect(() => {
     if (!open) return;
     void refresh().catch((e) => setErr(e instanceof Error ? e.message : 'Could not load comments'));
-  }, [open, postId]);
+  }, [open, postId, articleId]);
 
   const roots = useMemo(() => rows.filter((c) => !c.parentId), [rows]);
   const byParent = useMemo(() => {
@@ -45,6 +54,7 @@ export default function CommentThread({ postId, count }: { postId: string; count
       const parentId = replyTo ? replyTo.parentId || replyTo.id : undefined;
       await insertComment({
         postId,
+        articleId,
         authorId: user.id,
         body: text,
         parentId,
@@ -107,8 +117,8 @@ export default function CommentThread({ postId, count }: { postId: string; count
               </div>
             </form>
           ) : (
-            <Link to="/login" className="text-xs font-semibold text-pa-forest">
-              Sign in to comment
+            <Link to={`/signup?next=${encodeURIComponent(articleId ? `/journal/${articleId}` : '/home')}`} className="text-xs font-semibold text-pa-forest">
+              Sign up to comment
             </Link>
           )}
           {err && <p className="text-xs text-pa-rose">{err}</p>}
@@ -129,6 +139,7 @@ function CommentBlock({
   profileById: ReturnType<typeof useCatalog>['profileById'];
   onReply: (c: FeedComment) => void;
 }) {
+  const { user } = useAuth();
   const author = profileById(comment.authorId);
   return (
     <div>
@@ -145,9 +156,11 @@ function CommentBlock({
             )}{' '}
             <span className="text-stone-700">{comment.body}</span>
           </p>
-          <button type="button" className="mt-0.5 text-[11px] font-semibold text-pa-muted" onClick={() => onReply(comment)}>
-            Reply
-          </button>
+          {user && (
+            <button type="button" className="mt-0.5 text-[11px] font-semibold text-pa-muted" onClick={() => onReply(comment)}>
+              Reply
+            </button>
+          )}
         </div>
       </div>
       {replies.length > 0 && (
@@ -168,9 +181,11 @@ function CommentBlock({
                     )}{' '}
                     <span className="text-stone-700">{r.body}</span>
                   </p>
-                  <button type="button" className="text-[11px] font-semibold text-pa-muted" onClick={() => onReply(r)}>
-                    Reply
-                  </button>
+                  {user && (
+                    <button type="button" className="text-[11px] font-semibold text-pa-muted" onClick={() => onReply(r)}>
+                      Reply
+                    </button>
+                  )}
                 </div>
               </div>
             );

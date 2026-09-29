@@ -76,12 +76,20 @@ export default function CartPage() {
           <p className="font-semibold">Total {zar(total)}</p>
           <p className="mt-1 text-xs text-pa-muted">
             {canCheckout
-              ? 'Checkout opens that seller’s RedFace Pay merchant / subaccount link.'
+              ? user
+                ? 'Checkout opens that seller’s RedFace Pay merchant / subaccount link. Your account keeps the order trail.'
+                : 'Create an account to pay. Guest carts stay on this device until you join.'
               : 'Checkout needs one seller with an issued merchant link. Pay from each listing if shops differ, or wait until admin issues their link.'}
           </p>
-          <button type="button" className="btn-primary mt-4 w-full" onClick={checkout} disabled={!canCheckout}>
-            Pay with RedFace Pay
-          </button>
+          {user ? (
+            <button type="button" className="btn-primary mt-4 w-full" onClick={checkout} disabled={!canCheckout}>
+              Pay with RedFace Pay
+            </button>
+          ) : (
+            <Link to="/signup?next=/cart" className="btn-primary mt-4 block w-full text-center">
+              Sign up to pay and track this order
+            </Link>
+          )}
         </div>
       )}
     </div>

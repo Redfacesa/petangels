@@ -5,6 +5,7 @@ import { zar } from '../lib/config';
 import { addToCart } from '../lib/store';
 import { checkoutWithRedFacePay } from '../lib/redface-pay';
 import Avatar from '../components/Avatar';
+import CountryFlag from '../components/CountryFlag';
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -27,10 +28,12 @@ export default function ProductPage() {
       {seller && (
         <Link to={`/u/${seller.handle}`} className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-pa-ink">
           <Avatar profile={seller} className="h-8 w-8" />
-          {seller.name}
+          {seller.name} <CountryFlag code={seller.country} />
         </Link>
       )}
-      <p className="mt-3 text-xs text-pa-muted">Secure payment through the seller's payment account.</p>
+      <p className="mt-3 text-xs text-pa-muted">
+        Browse freely. To pay and track the order you need a Pet Angels account.
+      </p>
       {!seller?.redfaceMerchantId && (
         <p className="mt-4 rounded-2xl bg-pa-sand px-4 py-3 text-sm text-pa-muted">
           This seller does not have a merchant / subaccount link yet. An admin issues that after they
@@ -39,25 +42,31 @@ export default function ProductPage() {
         </p>
       )}
       <div className="mt-6 flex flex-wrap gap-3">
-        <button
-          type="button"
-          className="btn-primary"
-          disabled={!seller?.redfaceMerchantId}
-          onClick={() => {
-            if (!seller?.redfaceMerchantId) return;
-            void checkoutWithRedFacePay({
-              merchantId: seller.redfaceMerchantId,
-              amountZar: product.price,
-              label: `Pet Angels · ${product.title}`,
-              kind: product.kind === 'service' ? 'service' : 'product',
-              returnPath: '/profile?paid=1',
-              payerId: user?.id,
-              payeeProfileId: seller.id,
-            });
-          }}
-        >
-          Pay with RedFace Pay
-        </button>
+        {user ? (
+          <button
+            type="button"
+            className="btn-primary"
+            disabled={!seller?.redfaceMerchantId}
+            onClick={() => {
+              if (!seller?.redfaceMerchantId) return;
+              void checkoutWithRedFacePay({
+                merchantId: seller.redfaceMerchantId,
+                amountZar: product.price,
+                label: `Pet Angels · ${product.title}`,
+                kind: product.kind === 'service' ? 'service' : 'product',
+                returnPath: '/profile?paid=1',
+                payerId: user.id,
+                payeeProfileId: seller.id,
+              });
+            }}
+          >
+            Pay with RedFace Pay
+          </button>
+        ) : (
+          <Link to={`/signup?next=${encodeURIComponent(`/marketplace/${product.id}`)}`} className="btn-primary">
+            Sign up to buy & track
+          </Link>
+        )}
         <button
           type="button"
           className="btn-ghost"

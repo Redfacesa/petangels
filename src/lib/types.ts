@@ -24,6 +24,7 @@ export type Profile = {
   type: AccountType;
   bio: string;
   city: string;
+  country?: string;
   avatar: string;
   gender?: ProfileGender;
   cover?: string;
@@ -77,6 +78,7 @@ export type Pet = {
   breed: string;
   age: string;
   city: string;
+  country?: string;
   about: string;
   status: PetStatus;
   medicalNotes: string;
@@ -96,6 +98,7 @@ export type Product = {
   category: string;
   image: string;
   city?: string;
+  country?: string;
   featured?: boolean;
 };
 
@@ -106,6 +109,7 @@ export type AnimalListing = {
   species: 'dog' | 'cat' | 'other';
   age: string;
   city: string;
+  country?: string;
   status: 'looking_for_home' | 'foster_needed' | 'adopted';
   image: string;
   story: string;

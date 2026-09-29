@@ -5,10 +5,11 @@ import BottomNav from './BottomNav';
 import CreateSheet from './CreateSheet';
 import AdWrap from './AdWrap';
 import AppLink from './AppLink';
+import InboxBell from './InboxBell';
 import { useAuth } from '../contexts/AuthContext';
 import { APP_URL, MARKETING_URL, crossHostRedirect, isMarketingHost } from '../lib/hosts';
 
-const desktopNav = [
+const memberNav = [
   { to: '/home', label: 'Home' },
   { to: '/discover', label: 'Discover' },
   { to: '/map', label: 'Shelters' },
@@ -17,20 +18,31 @@ const desktopNav = [
   { to: '/rescue', label: 'Rescue' },
 ];
 
+const guestNav = [
+  { to: '/journal', label: 'Journal' },
+  { to: '/marketplace', label: 'Marketplace' },
+  { to: '/map', label: 'Shelters' },
+];
+
+function isBarePath(pathname: string, marketing: boolean) {
+  return (
+    (marketing && pathname === '/') ||
+    pathname === '/welcome' ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/legal') ||
+    pathname.startsWith('/auth')
+  );
+}
+
 export default function AppShell() {
   const { user } = useAuth();
   const loc = useLocation();
   const [createOpen, setCreateOpen] = useState(false);
   const bounce = crossHostRedirect(loc.pathname, loc.search, loc.hash);
   const marketing = isMarketingHost();
-  const publicPage =
-    marketing ||
-    loc.pathname === '/' ||
-    loc.pathname === '/welcome' ||
-    loc.pathname.startsWith('/login') ||
-    loc.pathname.startsWith('/signup') ||
-    loc.pathname.startsWith('/legal') ||
-    loc.pathname.startsWith('/auth');
+  const bare = isBarePath(loc.pathname, marketing);
+  const nav = user ? memberNav : guestNav;
 
   useEffect(() => {
     if (bounce) window.location.replace(bounce);
@@ -44,12 +56,12 @@ export default function AppShell() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-pa-sand/80 bg-pa-cream/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <Link to={marketing ? '/' : user ? '/home' : '/login'} aria-label="Pet Angels home">
+          <Link to={marketing ? '/' : user ? '/home' : '/journal'} aria-label="Pet Angels home">
             <BrandMark size="sm" />
           </Link>
-          {!publicPage && (
+          {!bare && (
             <nav className="hidden items-center gap-6 md:flex">
-              {desktopNav.map((n) => (
+              {nav.map((n) => (
                 <NavLink
                   key={n.to}
                   to={n.to}
@@ -60,17 +72,17 @@ export default function AppShell() {
                   {n.label}
                 </NavLink>
               ))}
-              <button type="button" className="btn-primary !min-h-9 !px-4 !py-1.5" onClick={() => setCreateOpen(true)}>
-                Create
-              </button>
+              {user && (
+                <button type="button" className="btn-primary !min-h-9 !px-4 !py-1.5" onClick={() => setCreateOpen(true)}>
+                  Create
+                </button>
+              )}
             </nav>
           )}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {user ? (
               <>
-                <AppLink to="/inbox" className="text-sm font-semibold text-pa-muted">
-                  Alerts
-                </AppLink>
+                <InboxBell />
                 <AppLink to="/profile" className="text-sm font-semibold text-pa-forest">
                   Profile
                 </AppLink>
@@ -88,12 +100,12 @@ export default function AppShell() {
           </div>
         </div>
       </header>
-      <main className={publicPage ? '' : 'pb-nav'}>
-        {publicPage ? <Outlet /> : <AdWrap><Outlet /></AdWrap>}
+      <main className={bare ? '' : 'pb-nav'}>
+        {bare ? <Outlet /> : <AdWrap><Outlet /></AdWrap>}
       </main>
       <BottomNav />
       <CreateSheet open={createOpen} onClose={() => setCreateOpen(false)} />
-      {!publicPage && (
+      {!bare && (
         <footer className="hidden border-t border-pa-sand px-4 py-8 text-center text-xs text-pa-muted md:block">
           Pet Angels SA ·{' '}
           <a className="font-semibold text-pa-forest" href={MARKETING_URL}>
@@ -111,6 +123,8 @@ export default function AppShell() {
           <Link to="/map">Shelter map</Link>
           {' · '}
           <Link to="/journal">Journal</Link>
+          {' · '}
+          <Link to="/marketplace">Marketplace</Link>
           {' · '}
           <Link to="/legal">Welfare & marketplace rules</Link>
         </footer>

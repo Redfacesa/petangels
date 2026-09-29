@@ -110,6 +110,7 @@ export default function CreatePage() {
           breed: String(fd.get('breed') || ''),
           age: String(fd.get('age') || ''),
           city: myProfile?.city || draft?.city || '',
+          country: myProfile?.country || 'ZA',
           about: body,
           status,
           photoUrl: imageUrl,
@@ -158,6 +159,7 @@ export default function CreatePage() {
           category: type === 'service' ? 'Services' : 'Pet accessories',
           imageUrl,
           city: myProfile?.city || draft?.city,
+          country: myProfile?.country || 'ZA',
         });
         await refresh();
         go('/marketplace');

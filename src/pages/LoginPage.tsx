@@ -55,7 +55,7 @@ export default function LoginPage() {
       </form>
       <p className="mt-6 text-center text-sm text-pa-muted">
         New here?{' '}
-        <Link to="/signup" className="font-semibold text-pa-forest">
+        <Link to={`/signup${next && next !== '/home' ? `?next=${encodeURIComponent(next)}` : ''}`} className="font-semibold text-pa-forest">
           Create account
         </Link>
       </p>
