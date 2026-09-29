@@ -500,6 +500,13 @@ export async function loadMySales(profileId: string): Promise<PayReceipt[]> {
   }));
 }
 
+export async function loadPostById(id: string): Promise<Post | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.from('pa_posts').select('*').eq('id', id).maybeSingle();
+  if (error || !data) return null;
+  return mapPost(data as Record<string, unknown>);
+}
+
 export async function insertPost(row: {
   authorId: string;
   kind: Post['kind'];

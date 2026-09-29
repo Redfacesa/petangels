@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useCatalog } from '../contexts/CatalogContext';
 import { useAuth } from '../contexts/AuthContext';
 import CommentThread from '../components/CommentThread';
@@ -6,6 +6,8 @@ import CountryFlag from '../components/CountryFlag';
 
 export default function ArticlePage() {
   const { id } = useParams();
+  const [params] = useSearchParams();
+  const commentId = params.get('c') || undefined;
   const { user } = useAuth();
   const { articleById, profileById } = useCatalog();
   const article = id ? articleById(id) : undefined;
@@ -36,7 +38,7 @@ export default function ArticlePage() {
             to comment.
           </p>
         )}
-        <CommentThread articleId={article.id} />
+        <CommentThread articleId={article.id} focusCommentId={commentId} />
       </div>
     </article>
   );

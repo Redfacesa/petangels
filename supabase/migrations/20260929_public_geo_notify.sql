@@ -154,7 +154,7 @@ begin
     where id = new.author_id;
     if post_author is distinct from parent_author then
       insert into public.pa_notifications (user_id, title, body, href)
-      values (post_author, 'New comment', snippet, '/posts/' || new.post_id);
+      values (post_author, 'New comment', snippet, '/posts/' || new.post_id || '?c=' || new.id);
     end if;
   end if;
 
@@ -167,7 +167,7 @@ begin
       select auth_user_id from public.pa_profiles where id = new.author_id
     ) then
       insert into public.pa_notifications (user_id, title, body, href)
-      values (parent_author, 'New reply', snippet, '/posts/' || new.post_id);
+      values (parent_author, 'New reply', snippet, '/posts/' || new.post_id || '?c=' || new.id);
     end if;
   end if;
   return new;

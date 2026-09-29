@@ -1,6 +1,9 @@
 import BrandMark from '../components/BrandMark';
 import AppLink from '../components/AppLink';
+import ProductCard from '../components/ProductCard';
+import CountryFlag from '../components/CountryFlag';
 import { useAuth } from '../contexts/AuthContext';
+import { useCatalog } from '../contexts/CatalogContext';
 import { APP_URL } from '../lib/hosts';
 
 const HERO = '/brand/hero-dogs.png';
@@ -11,6 +14,9 @@ const WALK = '/brand/hero-walk.png';
 
 export default function WelcomePage() {
   const { user } = useAuth();
+  const { articles, products, profileById } = useCatalog();
+  const journal = articles.slice(0, 6);
+  const shop = products.filter((p) => p.kind === 'product').slice(0, 8);
   return (
     <div className="bg-pa-cream">
       <section className="relative min-h-[88vh] overflow-hidden">
@@ -35,7 +41,13 @@ export default function WelcomePage() {
                 <AppLink to="/signup" className="rounded-full bg-pa-cream px-6 py-3 text-sm font-semibold text-pa-forest">
                   Sign up free
                 </AppLink>
-                <AppLink to="/login" className="rounded-full border border-pa-cream/50 px-6 py-3 text-sm font-semibold text-pa-cream">
+                <AppLink to="/journal" className="rounded-full border border-pa-cream/50 px-6 py-3 text-sm font-semibold text-pa-cream">
+                  Read the journal
+                </AppLink>
+                <AppLink to="/marketplace" className="rounded-full border border-pa-cream/50 px-6 py-3 text-sm font-semibold text-pa-cream">
+                  Browse marketplace
+                </AppLink>
+                <AppLink to="/login" className="rounded-full px-2 py-3 text-sm font-semibold text-pa-cream underline decoration-pa-cream/40">
                   Sign in
                 </AppLink>
               </>
@@ -46,6 +58,66 @@ export default function WelcomePage() {
             & Paystack
           </p>
         </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-14">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Journal · no account needed</p>
+            <h2 className="mt-2 font-display text-3xl text-pa-ink">Stories and guides</h2>
+            <p className="mt-2 max-w-2xl text-sm text-pa-muted">
+              Read every article as a guest. Sign up only if you want to comment or write.
+            </p>
+          </div>
+          <AppLink to="/journal" className="text-sm font-semibold text-pa-forest">
+            All articles →
+          </AppLink>
+        </div>
+        {journal.length === 0 ? (
+          <p className="mt-6 text-sm text-pa-muted">Articles will appear here as the community publishes them.</p>
+        ) : (
+          <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {journal.map((a) => {
+              const author = profileById(a.authorId);
+              return (
+                <AppLink key={a.id} to={`/journal/${a.id}`} className="card block overflow-hidden">
+                  {a.cover ? <img src={a.cover} alt="" className="h-40 w-full object-cover" /> : null}
+                  <div className="p-4">
+                    <h3 className="font-display text-xl text-pa-ink">{a.title}</h3>
+                    <p className="mt-1 text-xs text-pa-muted">
+                      {author?.name} {author ? <CountryFlag code={author.country} /> : null}
+                    </p>
+                    <p className="mt-2 line-clamp-3 text-sm text-stone-700">{a.excerpt}</p>
+                  </div>
+                </AppLink>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Marketplace · browse as a guest</p>
+            <h2 className="mt-2 font-display text-3xl text-pa-ink">Shops and products</h2>
+            <p className="mt-2 max-w-2xl text-sm text-pa-muted">
+              Look around freely. Create an account when you are ready to pay and track the order.
+            </p>
+          </div>
+          <AppLink to="/marketplace" className="text-sm font-semibold text-pa-forest">
+            Open marketplace →
+          </AppLink>
+        </div>
+        {shop.length === 0 ? (
+          <p className="mt-6 text-sm text-pa-muted">Listings will appear here as shops go live.</p>
+        ) : (
+          <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+            {shop.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-14">

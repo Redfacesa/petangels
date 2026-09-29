@@ -9,14 +9,16 @@ export default function CommentThread({
   postId,
   articleId,
   count,
+  focusCommentId,
 }: {
   postId?: string;
   articleId?: string;
   count?: number;
+  focusCommentId?: string;
 }) {
   const { user } = useAuth();
   const { profileById } = useCatalog();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(Boolean(focusCommentId));
   const [rows, setRows] = useState<FeedComment[]>([]);
   const [replyTo, setReplyTo] = useState<FeedComment | null>(null);
   const [text, setText] = useState('');
@@ -29,9 +31,19 @@ export default function CommentThread({
   }
 
   useEffect(() => {
+    if (focusCommentId) setOpen(true);
+  }, [focusCommentId]);
+
+  useEffect(() => {
     if (!open) return;
     void refresh().catch((e) => setErr(e instanceof Error ? e.message : 'Could not load comments'));
   }, [open, postId, articleId]);
+
+  useEffect(() => {
+    if (!open || !focusCommentId || rows.length === 0) return;
+    const node = document.getElementById(`comment-${focusCommentId}`);
+    node?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [open, rows, focusCommentId]);
 
   const roots = useMemo(() => rows.filter((c) => !c.parentId), [rows]);
   const byParent = useMemo(() => {
@@ -69,7 +81,7 @@ export default function CommentThread({
     }
   }
 
-  const shown = Math.max(count, rows.length);
+  const shown = Math.max(count ?? 0, rows.length);
 
   return (
     <div className="pt-2">
@@ -90,6 +102,7 @@ export default function CommentThread({
               replies={byParent.get(c.id) || []}
               profileById={profileById}
               onReply={setReplyTo}
+              focusCommentId={focusCommentId}
             />
           ))}
           {user ? (
@@ -133,16 +146,19 @@ function CommentBlock({
   replies,
   profileById,
   onReply,
+  focusCommentId,
 }: {
   comment: FeedComment;
   replies: FeedComment[];
   profileById: ReturnType<typeof useCatalog>['profileById'];
   onReply: (c: FeedComment) => void;
+  focusCommentId?: string;
 }) {
   const { user } = useAuth();
   const author = profileById(comment.authorId);
+  const focused = focusCommentId === comment.id;
   return (
-    <div>
+    <div id={`comment-${comment.id}`} className={focused ? 'rounded-2xl bg-pa-sage/30 p-2' : undefined}>
       <div className="flex gap-2">
         <Avatar profile={author} className="h-8 w-8" />
         <div className="min-w-0 flex-1">
@@ -168,7 +184,11 @@ function CommentBlock({
           {replies.map((r) => {
             const who = profileById(r.authorId);
             return (
-              <div key={r.id} className="flex gap-2">
+              <div
+                key={r.id}
+                id={`comment-${r.id}`}
+                className={`flex gap-2 ${focusCommentId === r.id ? 'rounded-2xl bg-pa-sage/30 p-2' : ''}`}
+              >
                 <Avatar profile={who} className="h-7 w-7" />
                 <div>
                   <p className="text-sm">

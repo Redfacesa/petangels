@@ -29,7 +29,15 @@ function formatCount(n: number) {
   return String(n);
 }
 
-export default function FeedCard({ post, onDeleted }: { post: Post; onDeleted?: () => void }) {
+export default function FeedCard({
+  post,
+  onDeleted,
+  focusCommentId,
+}: {
+  post: Post;
+  onDeleted?: () => void;
+  focusCommentId?: string;
+}) {
   const { user } = useAuth();
   const { profileById, petById, likedPostIds, refresh } = useCatalog();
   const { showToast } = useToast();
@@ -113,7 +121,7 @@ export default function FeedCard({ post, onDeleted }: { post: Post; onDeleted?: 
           )}
         </div>
         {error && <p className="text-xs text-pa-rose">{error}</p>}
-        <CommentThread postId={post.id} count={post.comments} />
+        <CommentThread postId={post.id} count={post.comments} focusCommentId={focusCommentId} />
       </div>
       <ConfirmModal
         open={askDelete}
