@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { zar } from '../lib/config';
 import { addToCart } from '../lib/store';
 import { checkoutWithRedFacePay } from '../lib/redface-pay';
+import Avatar from '../components/Avatar';
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -25,7 +26,7 @@ export default function ProductPage() {
       </p>
       {seller && (
         <Link to={`/u/${seller.handle}`} className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-pa-ink">
-          <img src={seller.avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
+          <Avatar profile={seller} className="h-8 w-8" />
           {seller.name}
         </Link>
       )}

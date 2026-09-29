@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCatalog } from '../contexts/CatalogContext';
+import Avatar from '../components/Avatar';
 
 export default function DiscoverPage() {
   const { profiles, animals, pets, articles } = useCatalog();
@@ -120,7 +121,7 @@ function ProfileRow({ items }: { items: ReturnType<typeof useCatalog>['profiles'
     <div className="flex gap-3 overflow-x-auto pb-2">
       {items.map((p) => (
         <Link key={p.id} to={`/u/${p.handle}`} className="card min-w-[180px] p-4">
-          <img src={p.avatar} alt="" className="h-14 w-14 rounded-full object-cover" />
+          <Avatar profile={p} className="h-14 w-14" />
           <p className="mt-2 font-semibold">{p.name}</p>
           <p className="text-xs text-pa-muted">{p.city}</p>
         </Link>

@@ -23,6 +23,8 @@ import ProductCard from '../components/ProductCard';
 import TrustBadges from '../components/TrustBadges';
 import PaymentSetup from '../components/PaymentSetup';
 import PostGrid from '../components/PostGrid';
+import Avatar from '../components/Avatar';
+import { parseGender } from '../lib/types';
 import { isStaffUser } from '../components/TrustBadges';
 
 type Tab = 'posts' | 'animals' | 'market' | 'donations' | 'purchases' | 'payout' | 'activity' | 'edit';
@@ -78,6 +80,7 @@ export default function ProfilePage() {
       accountType,
       city,
       avatarUrl: extra?.avatarUrl,
+      gender: mine?.gender,
     });
   }
 
@@ -166,11 +169,10 @@ export default function ProfilePage() {
         <div className="flex gap-4">
           <div className="shrink-0">
             <label className="relative flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-pa-sand ring-2 ring-pa-forest/20">
-              {mine?.avatar ? (
-                <img src={mine.avatar} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <span className="px-2 text-center text-[11px] font-semibold text-pa-forest">Add photo</span>
-              )}
+              <Avatar profile={mine} className="h-24 w-24" />
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-black/45 py-1 text-center text-[10px] font-semibold text-white">
+                {mine?.avatar ? 'Change' : 'Add photo'}
+              </span>
               <input
                 type="file"
                 accept="image/*"
@@ -438,6 +440,7 @@ export default function ProfilePage() {
               accountType,
               city: String(fd.get('city') || ''),
               bio: String(fd.get('bio') || ''),
+              gender: accountType === 'pet_parent' ? parseGender(fd.get('gender')) : 'unspecified',
             })
               .then(() => refresh())
               .then(() => setMsg('Profile updated.'))
@@ -446,6 +449,22 @@ export default function ProfilePage() {
         >
           <input name="name" className="input" defaultValue={name} placeholder="Display name" required />
           <input name="city" className="input" defaultValue={city} placeholder="City" />
+          {accountType === 'pet_parent' && (
+            <div>
+              <p className="label">Profile character</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <label className="flex items-center gap-2 rounded-2xl border border-pa-sand px-3 py-2 text-sm font-semibold">
+                  <input type="radio" name="gender" value="female" required defaultChecked={mine?.gender === 'female'} />
+                  Female
+                </label>
+                <label className="flex items-center gap-2 rounded-2xl border border-pa-sand px-3 py-2 text-sm font-semibold">
+                  <input type="radio" name="gender" value="male" required defaultChecked={mine?.gender === 'male'} />
+                  Male
+                </label>
+              </div>
+              <p className="mt-1 text-xs text-pa-muted">Shown when you have no profile photo.</p>
+            </div>
+          )}
           <textarea name="bio" className="input min-h-24" defaultValue={mine?.bio || ''} placeholder="About you" />
           <button className="btn-primary w-full" type="submit">
             Save profile

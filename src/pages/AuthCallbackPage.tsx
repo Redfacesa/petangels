@@ -4,6 +4,7 @@ import { parseSsoCallback } from '../lib/redface-pay';
 import { supabase } from '../lib/supabase';
 import { uniqueHandle, upsertMyProfile } from '../lib/db';
 import type { AccountType } from '../lib/types';
+import { parseGender } from '../lib/types';
 
 export default function AuthCallbackPage() {
   const [params] = useSearchParams();
@@ -40,6 +41,7 @@ export default function AuthCallbackPage() {
               name: String(meta.full_name || 'Pet Angel'),
               accountType: type,
               city: String(meta.city || ''),
+              gender: parseGender(meta.gender),
             });
           } catch {
             /* trigger may already have created the row */

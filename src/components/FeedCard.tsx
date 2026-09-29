@@ -9,6 +9,7 @@ import ReportControl from './ReportControl';
 import CommentThread from './CommentThread';
 import ConfirmModal from './ConfirmModal';
 import { useToast } from './Toast';
+import Avatar from './Avatar';
 
 const laneLabel: Record<Post['lane'], string> = {
   community: 'Community',
@@ -47,7 +48,7 @@ export default function FeedCard({ post, onDeleted }: { post: Post; onDeleted?: 
       <div className="flex items-start justify-between gap-3 px-4 pt-4">
         {author && (
           <Link to={`/u/${author.handle}`} className="flex items-center gap-3">
-            <img src={author.avatar} alt="" className="h-11 w-11 rounded-full object-cover" />
+            <Avatar profile={author} className="h-11 w-11" />
             <div>
               <p className="text-sm font-semibold text-pa-ink">{headline}</p>
               <p className="text-xs text-pa-muted">{byline}</p>

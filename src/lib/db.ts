@@ -13,6 +13,7 @@ import type {
   Trust,
 } from './types';
 import { publicMediaUrl } from './media';
+import { parseGender } from './types';
 
 function emptyTrust(row: Record<string, unknown>, payoutReady: boolean): Trust {
   return {
@@ -36,6 +37,7 @@ function mapProfile(row: Record<string, unknown>): Profile {
     bio: String(row.bio || ''),
     city: String(row.city || ''),
     avatar: publicMediaUrl(String(row.avatar_url || '')),
+    gender: parseGender(row.gender),
     cover: row.cover_url ? publicMediaUrl(String(row.cover_url)) : undefined,
     verified: Boolean(row.verified || row.shelter_verified || row.business_verified),
     pets: (row.pets as string[]) || [],
@@ -204,7 +206,7 @@ export async function loadCatalog(viewerId?: string): Promise<Catalog> {
     supabase
       .from('pa_profiles')
       .select(
-        'id, handle, name, account_type, bio, city, avatar_url, cover_url, verified, pets, categories, redface_merchant_id, auth_user_id, is_staff, email_verified, phone_verified, business_verified, shelter_verified, caregiver_verified',
+        'id, handle, name, account_type, bio, city, avatar_url, cover_url, gender, verified, pets, categories, redface_merchant_id, auth_user_id, is_staff, email_verified, phone_verified, business_verified, shelter_verified, caregiver_verified',
       ),
     supabase.from('pa_posts').select('*').order('created_at', { ascending: false }),
     supabase.from('pa_listings').select('*'),
@@ -328,6 +330,7 @@ export async function upsertMyProfile(input: {
   city?: string;
   bio?: string;
   avatarUrl?: string;
+  gender?: Profile['gender'];
 }) {
   if (!supabase) throw new Error('Database not configured');
   const row: Record<string, unknown> = {
@@ -338,17 +341,38 @@ export async function upsertMyProfile(input: {
     bio: input.bio || '',
   };
   if (input.avatarUrl) row.avatar_url = input.avatarUrl;
+  if (input.gender) row.gender = input.gender;
 
   const update = await supabase.from('pa_profiles').update(row).eq('auth_user_id', input.userId).select('id');
-  if (update.error) throw update.error;
-  if (update.data && update.data.length > 0) return;
+  if (update.error) {
+    if (input.gender && /gender/i.test(update.error.message)) {
+      delete row.gender;
+      const retry = await supabase.from('pa_profiles').update(row).eq('auth_user_id', input.userId).select('id');
+      if (retry.error) throw retry.error;
+      if (retry.data && retry.data.length > 0) return;
+    } else {
+      throw update.error;
+    }
+  } else if (update.data && update.data.length > 0) return;
 
   const { error } = await supabase.from('pa_profiles').insert({
     id: input.userId,
     auth_user_id: input.userId,
     ...row,
   });
-  if (error) throw error;
+  if (error) {
+    if (row.gender && /gender/i.test(error.message)) {
+      delete row.gender;
+      const retry = await supabase.from('pa_profiles').insert({
+        id: input.userId,
+        auth_user_id: input.userId,
+        ...row,
+      });
+      if (retry.error) throw retry.error;
+      return;
+    }
+    throw error;
+  }
 }
 
 export async function uniqueHandle(base: string) {

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCatalog } from '../contexts/CatalogContext';
 import { insertComment, loadComments, type FeedComment } from '../lib/db';
+import Avatar from './Avatar';
 
 export default function CommentThread({ postId, count }: { postId: string; count: number }) {
   const { user } = useAuth();
@@ -132,11 +133,7 @@ function CommentBlock({
   return (
     <div>
       <div className="flex gap-2">
-        {author?.avatar ? (
-          <img src={author.avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
-        ) : (
-          <div className="h-8 w-8 rounded-full bg-pa-sand" />
-        )}
+        <Avatar profile={author} className="h-8 w-8" />
         <div className="min-w-0 flex-1">
           <p className="text-sm">
             {author ? (
@@ -159,11 +156,7 @@ function CommentBlock({
             const who = profileById(r.authorId);
             return (
               <div key={r.id} className="flex gap-2">
-                {who?.avatar ? (
-                  <img src={who.avatar} alt="" className="h-7 w-7 rounded-full object-cover" />
-                ) : (
-                  <div className="h-7 w-7 rounded-full bg-pa-sand" />
-                )}
+                <Avatar profile={who} className="h-7 w-7" />
                 <div>
                   <p className="text-sm">
                     {who ? (

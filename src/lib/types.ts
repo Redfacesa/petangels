@@ -1,5 +1,12 @@
 export type AccountType = 'pet_parent' | 'merchant' | 'shelter';
 
+export type ProfileGender = 'female' | 'male' | 'unspecified';
+
+export function parseGender(raw: unknown): ProfileGender {
+  if (raw === 'female' || raw === 'male') return raw;
+  return 'unspecified';
+}
+
 export type Trust = {
   emailVerified: boolean;
   phoneVerified: boolean;
@@ -18,6 +25,7 @@ export type Profile = {
   bio: string;
   city: string;
   avatar: string;
+  gender?: ProfileGender;
   cover?: string;
   verified?: boolean;
   pets?: string[];

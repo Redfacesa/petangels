@@ -6,6 +6,7 @@ import PostGrid from '../components/PostGrid';
 import { useCatalog } from '../contexts/CatalogContext';
 import { useAuth } from '../contexts/AuthContext';
 import { checkoutWithRedFacePay } from '../lib/redface-pay';
+import Avatar from '../components/Avatar';
 
 export default function PublicProfilePage() {
   const { handle } = useParams();
@@ -32,7 +33,7 @@ export default function PublicProfilePage() {
     <div className="mx-auto max-w-3xl px-4 py-8">
       <div className="card p-6">
         <div className="flex items-start gap-4">
-          <img src={profile.avatar} alt="" className="h-20 w-20 rounded-full object-cover" />
+          <Avatar profile={profile} className="h-20 w-20" />
           <div>
             <h1 className="font-display text-3xl">{profile.name}</h1>
             <p className="text-sm text-pa-forest">{role}</p>

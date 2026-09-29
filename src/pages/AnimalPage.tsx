@@ -2,6 +2,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { useCatalog } from '../contexts/CatalogContext';
 import { useAuth } from '../contexts/AuthContext';
 import { checkoutWithRedFacePay } from '../lib/redface-pay';
+import Avatar from '../components/Avatar';
 
 export default function AnimalPage() {
   const { id } = useParams();
@@ -25,7 +26,7 @@ export default function AnimalPage() {
       <p className="mt-4 text-sm leading-relaxed text-stone-700">{animal.story}</p>
       {org && (
         <Link to={`/u/${org.handle}`} className="mt-4 inline-flex items-center gap-2 font-semibold">
-          <img src={org.avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
+          <Avatar profile={org} className="h-8 w-8" />
           {org.name}
         </Link>
       )}

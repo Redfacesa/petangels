@@ -4,6 +4,7 @@ import BrandMark from '../components/BrandMark';
 import { useAuth } from '../contexts/AuthContext';
 import { saveLocalProfile } from '../lib/store';
 import type { AccountType } from '../lib/types';
+import { parseGender } from '../lib/types';
 import { uniqueHandle, upsertMyProfile } from '../lib/db';
 import { supabase } from '../lib/supabase';
 
@@ -27,6 +28,7 @@ export default function SignupPage() {
     const email = String(fd.get('email') || '');
     const password = String(fd.get('password') || '');
     const city = String(fd.get('city') || '');
+    const gender = type === 'pet_parent' ? parseGender(fd.get('gender')) : 'unspecified';
     const handle = await uniqueHandle(name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 18) || 'angel');
 
     saveLocalProfile({ displayName: name, handle, city, accountType: type });
@@ -37,6 +39,7 @@ export default function SignupPage() {
         account_type: type,
         city,
         handle,
+        gender,
       });
       if (result.error) {
         setError(result.error);
@@ -57,6 +60,7 @@ export default function SignupPage() {
             name,
             accountType: type,
             city,
+            gender,
           });
         } catch (err) {
           setError(err instanceof Error ? err.message : 'Account created, but the profile could not be saved. Sign in and open Profile.');
@@ -124,6 +128,22 @@ export default function SignupPage() {
           </label>
           <input id="city" name="city" className="input" defaultValue="Cape Town" required />
         </div>
+        {type === 'pet_parent' && (
+          <div>
+            <p className="label">I am</p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <label className="flex cursor-pointer items-center gap-2 rounded-2xl border border-pa-sand bg-white px-3 py-3 text-sm font-semibold">
+                <input type="radio" name="gender" value="female" required />
+                Female
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 rounded-2xl border border-pa-sand bg-white px-3 py-3 text-sm font-semibold">
+                <input type="radio" name="gender" value="male" required />
+                Male
+              </label>
+            </div>
+            <p className="mt-2 text-xs text-pa-muted">Used for your default profile character until you add a photo.</p>
+          </div>
+        )}
         <div>
           <label className="label" htmlFor="email">
             Email

@@ -12,22 +12,8 @@ type AuthValue = {
   signUp: (
     email: string,
     password: string,
-    meta?: { full_name?: string; account_type?: string; city?: string; handle?: string },
+    meta?: { full_name?: string; account_type?: string; city?: string; handle?: string; gender?: string },
   ) => Promise<{ error?: string; needsConfirm?: boolean }>;
-  signOut: () => Promise<void>;
-};
-
-type AuthValue = {
-  user: User | null;
-  session: Session | null;
-  loading: boolean;
-  configured: boolean;
-  signIn: (email: string, password: string) => Promise<{ error?: string }>;
-  signUp: (
-    email: string,
-    password: string,
-    meta?: { full_name?: string; account_type?: string; city?: string; handle?: string },
-  ) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
 };
 
@@ -78,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               account_type: meta?.account_type || 'pet_parent',
               city: meta?.city || '',
               handle: meta?.handle || '',
+              gender: meta?.gender || 'unspecified',
               ecosystem_from: 'pet-angels',
             },
           },
