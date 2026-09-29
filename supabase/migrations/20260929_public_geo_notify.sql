@@ -23,13 +23,13 @@ create or replace view public.pa_pets_public as
     breed,
     age,
     city,
-    country,
     about,
     status,
     last_seen_at,
     last_seen_place,
     public_contact,
-    created_at
+    created_at,
+    country
   from public.pa_pets;
 
 grant select on public.pa_pets_public to anon, authenticated;
