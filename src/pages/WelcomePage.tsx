@@ -4,7 +4,9 @@ import ProductCard from '../components/ProductCard';
 import CountryFlag from '../components/CountryFlag';
 import { useAuth } from '../contexts/AuthContext';
 import { useCatalog } from '../contexts/CatalogContext';
-import { APP_URL } from '../lib/hosts';
+import AdSlot from '../components/AdSlot';
+import { ADSENSE_SLOT_WRAP } from '../lib/config';
+import { isNativeApp } from '../lib/native';
 
 const HERO = '/brand/hero-dogs.png';
 const CAT = '/brand/hero-cat.png';
@@ -96,6 +98,17 @@ export default function WelcomePage() {
         )}
       </section>
 
+      {!isNativeApp() && (
+        <div className="mx-auto flex max-w-6xl justify-center px-4 py-6">
+          <div className="hidden md:block">
+            <AdSlot kind="wrap" slot={ADSENSE_SLOT_WRAP} />
+          </div>
+          <div className="md:hidden">
+            <AdSlot kind="mobile" slot={ADSENSE_SLOT_WRAP} />
+          </div>
+        </div>
+      )}
+
       <section className="mx-auto max-w-6xl px-4 pb-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -119,6 +132,17 @@ export default function WelcomePage() {
           </div>
         )}
       </section>
+
+      {!isNativeApp() && (
+        <div className="mx-auto flex max-w-6xl justify-center px-4 py-8">
+          <div className="hidden md:block">
+            <AdSlot kind="wrap" slot={ADSENSE_SLOT_WRAP} />
+          </div>
+          <div className="md:hidden">
+            <AdSlot kind="mobile" slot={ADSENSE_SLOT_WRAP} />
+          </div>
+        </div>
+      )}
 
       <section className="mx-auto max-w-6xl px-4 py-14">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">After you sign in</p>
@@ -151,16 +175,17 @@ export default function WelcomePage() {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Shelter map</p>
         <h2 className="mt-2 font-display text-3xl text-pa-ink">How to find a shelter</h2>
         <p className="mt-2 max-w-2xl text-sm text-pa-muted">
-          The map is live. Tap a pin, read the shelter, then adopt, volunteer, or donate — not a carousel of screenshots.
+          The map is live on Pet Angels — open it from here. No embedded map widgets on this page, so ads and
+          previews can see the whole layout.
         </p>
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
-          <div className="overflow-hidden rounded-3xl border border-pa-sand">
-            <iframe
-              title="How the Shelter Map works"
-              className="h-72 w-full md:h-96"
-              src="https://www.openstreetmap.org/export/embed.html?bbox=16.4%2C-35.2%2C33.0%2C-22.0&amp;layer=mapnik&amp;marker=-33.9249%2C18.4241"
-            />
-          </div>
+          <AppLink to="/map" className="relative block overflow-hidden rounded-3xl border border-pa-sand">
+            <img src={WALK} alt="South Africa — open the live Shelter Map" className="h-72 w-full object-cover md:h-96" />
+            <span className="absolute inset-0 bg-pa-forest/45" />
+            <span className="absolute inset-x-0 bottom-0 p-5 font-display text-2xl text-pa-cream">
+              Open the live Shelter Map
+            </span>
+          </AppLink>
           <ol className="space-y-4">
             {[
               ['Open the map', 'From Discover, Rescue, or the Shelters tab — the same live map members use.'],

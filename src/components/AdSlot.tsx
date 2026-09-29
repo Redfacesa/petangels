@@ -3,10 +3,11 @@ import { ADSENSE_CLIENT } from '../lib/config';
 
 type SlotKind = 'rail' | 'wrap' | 'mobile';
 
-const SIZE: Record<SlotKind, string> = {
-  rail: 'min-h-[600px] w-[160px]',
-  wrap: 'min-h-[90px] w-full max-w-[728px]',
-  mobile: 'min-h-[100px] w-full max-w-[320px]',
+/** Fixed Display sizes — not Auto ads. Google fills only these boxes. */
+const BOX: Record<SlotKind, { className: string; width: number; height: number }> = {
+  rail: { className: 'w-[160px]', width: 160, height: 600 },
+  wrap: { className: 'w-full max-w-[728px]', width: 728, height: 90 },
+  mobile: { className: 'w-full max-w-[320px]', width: 320, height: 100 },
 };
 
 export default function AdSlot({
@@ -20,6 +21,7 @@ export default function AdSlot({
 }) {
   const insRef = useRef<HTMLModElement>(null);
   const live = Boolean(ADSENSE_CLIENT && slot);
+  const box = BOX[kind];
 
   useEffect(() => {
     if (!live || !insRef.current) return;
@@ -28,29 +30,30 @@ export default function AdSlot({
       w.adsbygoogle = w.adsbygoogle || [];
       w.adsbygoogle.push({});
     } catch {
-      /* AdSense script may not be ready yet */
+      /* script may still be loading */
     }
   }, [live, slot]);
 
   return (
     <aside
-      className={`mx-auto flex flex-col items-center justify-start rounded-2xl border border-dashed border-pa-sand bg-pa-paper/80 p-2 ${SIZE[kind]}`}
+      className={`mx-auto flex flex-col items-center rounded-2xl border border-pa-sand bg-pa-paper/80 p-2 ${box.className}`}
       aria-label="Advertisement"
     >
       <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-pa-muted">{label}</p>
       {live ? (
         <ins
           ref={insRef}
-          className="adsbygoogle block w-full"
-          style={{ display: 'block' }}
+          className="adsbygoogle"
+          style={{ display: 'inline-block', width: box.width, height: box.height }}
           data-ad-client={ADSENSE_CLIENT}
           data-ad-slot={slot}
-          data-ad-format="auto"
-          data-full-width-responsive="true"
         />
       ) : (
-        <div className="flex h-full min-h-[72px] w-full items-center justify-center px-2 text-center text-[11px] leading-snug text-pa-muted">
-          Pet-friendly ads sit in the side wrap — never as pop-ups, never over the feed.
+        <div
+          className="flex w-full items-center justify-center px-2 text-center text-[11px] leading-snug text-pa-muted"
+          style={{ minHeight: box.height }}
+        >
+          Display ad · {box.width}×{box.height}
         </div>
       )}
     </aside>
