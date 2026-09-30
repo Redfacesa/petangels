@@ -1155,3 +1155,102 @@ export async function recordPayHandoff(input: {
     .single();
   return fallback.data?.id ? String(fallback.data.id) : null;
 }
+
+export async function loadFollowingIds(followerId: string): Promise<string[]> {
+  if (!supabase || !followerId) return [];
+  const { data, error } = await supabase.from('pa_follows').select('followee_id').eq('follower_id', followerId);
+  if (error) return [];
+  return (data || []).map((r) => String(r.followee_id));
+}
+
+export async function loadFollowCounts(profileId: string) {
+  if (!supabase) return { followers: 0, following: 0 };
+  const [followers, following] = await Promise.all([
+    supabase.from('pa_follows').select('follower_id', { count: 'exact', head: true }).eq('followee_id', profileId),
+    supabase.from('pa_follows').select('followee_id', { count: 'exact', head: true }).eq('follower_id', profileId),
+  ]);
+  return { followers: followers.count || 0, following: following.count || 0 };
+}
+
+export async function setFollowing(followerId: string, followeeId: string, follow: boolean) {
+  if (!supabase) throw new Error('Database not configured');
+  if (follow) {
+    const { error } = await supabase.from('pa_follows').insert({ follower_id: followerId, followee_id: followeeId });
+    if (error && !/duplicate|unique/i.test(error.message)) throw error;
+    return;
+  }
+  const { error } = await supabase.from('pa_follows').delete().eq('follower_id', followerId).eq('followee_id', followeeId);
+  if (error) throw error;
+}
+
+export async function openChatWith(otherProfileId: string) {
+  if (!supabase) throw new Error('Database not configured');
+  const { data, error } = await supabase.rpc('pa_open_chat', { other_id: otherProfileId });
+  if (error) throw error;
+  return String(data);
+}
+
+export type ChatPreview = {
+  id: string;
+  otherId: string;
+  updatedAt: string;
+  lastBody: string;
+};
+
+export async function loadMyChats(myProfileId: string): Promise<ChatPreview[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('pa_chats')
+    .select('id, a_id, b_id, updated_at')
+    .or(`a_id.eq.${myProfileId},b_id.eq.${myProfileId}`)
+    .order('updated_at', { ascending: false })
+    .limit(40);
+  if (error) return [];
+  const rows = data || [];
+  const previews = await Promise.all(
+    rows.map(async (row) => {
+      const otherId = String(row.a_id) === myProfileId ? String(row.b_id) : String(row.a_id);
+      const { data: last } = await supabase!
+        .from('pa_chat_messages')
+        .select('body')
+        .eq('chat_id', row.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return {
+        id: String(row.id),
+        otherId,
+        updatedAt: String(row.updated_at),
+        lastBody: String(last?.body || ''),
+      };
+    }),
+  );
+  return previews;
+}
+
+export type ChatMessage = { id: string; senderId: string; body: string; createdAt: string };
+
+export async function loadChatMessages(chatId: string): Promise<ChatMessage[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('pa_chat_messages')
+    .select('id, sender_id, body, created_at')
+    .eq('chat_id', chatId)
+    .order('created_at', { ascending: true })
+    .limit(200);
+  if (error) return [];
+  return (data || []).map((r) => ({
+    id: String(r.id),
+    senderId: String(r.sender_id),
+    body: String(r.body),
+    createdAt: String(r.created_at),
+  }));
+}
+
+export async function sendChatMessage(chatId: string, senderId: string, body: string) {
+  if (!supabase) throw new Error('Database not configured');
+  const text = body.trim();
+  if (!text) return;
+  const { error } = await supabase.from('pa_chat_messages').insert({ chat_id: chatId, sender_id: senderId, body: text });
+  if (error) throw error;
+}

@@ -27,7 +27,7 @@ import Avatar from '../components/Avatar';
 import CountryFlag from '../components/CountryFlag';
 import { parseGender } from '../lib/types';
 import { COUNTRIES, parseCountry } from '../lib/geo';
-import { isStaffUser } from '../components/TrustBadges';
+import FollowButton from '../components/FollowButton';
 import { PAYSTACK_ZA_BANKS, paystackZaBankByName, resolvePaystackZaBankName } from '../lib/paystack-banks';
 
 type Tab = 'posts' | 'animals' | 'market' | 'donations' | 'purchases' | 'payout' | 'activity' | 'edit';
@@ -220,6 +220,7 @@ export default function ProfilePage() {
               {city ? ` · ${city}` : ''}
             </p>
             {mine && <TrustBadges profile={mine} emailConfirmed={Boolean(user.email_confirmed_at)} />}
+            {mine && <FollowButton profileId={mine.id} />}
             {isStaffUser(user.email, mine) && (
               <Link to="/admin" className="mt-2 inline-block rounded-full bg-pa-forest px-3 py-1 text-xs font-semibold text-white">
                 Admin · approve banks

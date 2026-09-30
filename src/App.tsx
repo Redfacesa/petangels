@@ -30,6 +30,7 @@ import ArticlePage from './pages/ArticlePage';
 import PetPage from './pages/PetPage';
 import AdminPage from './pages/AdminPage';
 import InboxPage from './pages/InboxPage';
+import MessagesPage from './pages/MessagesPage';
 import PostPage from './pages/PostPage';
 import { isMarketingHost } from './lib/hosts';
 
@@ -70,6 +71,9 @@ export default function App() {
             <Route path="/pets/:id" element={<PetPage />} />
             <Route path="/posts/:id" element={<Gate><PostPage /></Gate>} />
             <Route path="/inbox" element={<Gate><InboxPage /></Gate>} />
+            <Route path="/messages/to/:profileId" element={<Gate><MessagesPage /></Gate>} />
+            <Route path="/messages/:chatId" element={<Gate><MessagesPage /></Gate>} />
+            <Route path="/messages" element={<Gate><MessagesPage /></Gate>} />
             <Route path="/admin" element={<Gate><AdminPage /></Gate>} />
             <Route path="/profile" element={<Gate><ProfilePage /></Gate>} />
             <Route path="/u/:handle" element={<PublicProfilePage />} />

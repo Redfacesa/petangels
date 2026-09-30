@@ -10,6 +10,7 @@ function ageHours(createdAt: string) {
 export type RankContext = {
   place?: Place;
   authorPlace?: (authorId: string) => { country?: string; city?: string } | undefined;
+  followingIds?: Set<string>;
 };
 
 /** Recency + conversation + photos + purpose + same country/city so the feed feels local and alive. */
@@ -37,7 +38,8 @@ export function scorePost(post: Post, ctx?: RankContext) {
     if (post.lane === 'commerce' && parseCountry(author?.country) === parseCountry(ctx.place.country)) local += 3;
     if ((post.kind === 'lost' || post.kind === 'found') && sameCity(author?.city, ctx.place.city)) local += 8;
   }
-  return recency + fresh + engagement + velocity + photos + purpose + local;
+  const following = ctx?.followingIds?.has(post.authorId) ? 11 : 0;
+  return recency + fresh + engagement + velocity + photos + purpose + local + following;
 }
 
 function laneKey(post: Post) {

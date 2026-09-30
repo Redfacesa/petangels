@@ -6,12 +6,14 @@ import CreateSheet from './CreateSheet';
 import AdWrap from './AdWrap';
 import AppLink from './AppLink';
 import InboxBell from './InboxBell';
+import HamburgerMenu from './HamburgerMenu';
 import { useAuth } from '../contexts/AuthContext';
 import { APP_URL, MARKETING_URL, crossHostRedirect, isMarketingHost } from '../lib/hosts';
 
 const memberNav = [
   { to: '/home', label: 'Home' },
   { to: '/discover', label: 'Discover' },
+  { to: '/messages', label: 'Chat' },
   { to: '/map', label: 'Shelters' },
   { to: '/journal', label: 'Journal' },
   { to: '/marketplace', label: 'Marketplace' },
@@ -39,6 +41,7 @@ export default function AppShell() {
   const { user } = useAuth();
   const loc = useLocation();
   const [createOpen, setCreateOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const bounce = crossHostRedirect(loc.pathname, loc.search, loc.hash);
   const marketing = isMarketingHost();
   const bare = isBarePath(loc.pathname, marketing);
@@ -56,9 +59,23 @@ export default function AppShell() {
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-pa-sand/80 bg-pa-cream/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <Link to={marketing ? '/' : user ? '/home' : '/journal'} aria-label="Pet Angels home">
-            <BrandMark size="sm" />
-          </Link>
+          <div className="flex items-center gap-3">
+            {!bare && (
+              <button
+                type="button"
+                className="flex h-10 w-10 flex-col items-center justify-center gap-1 rounded-xl"
+                aria-label="Open menu"
+                onClick={() => setMenuOpen(true)}
+              >
+                <span className="block h-0.5 w-5 bg-pa-ink" />
+                <span className="block h-0.5 w-5 bg-pa-ink" />
+                <span className="block h-0.5 w-5 bg-pa-ink" />
+              </button>
+            )}
+            <Link to={marketing ? '/' : user ? '/home' : '/journal'} aria-label="Pet Angels home">
+              <BrandMark size="sm" />
+            </Link>
+          </div>
           {!bare && (
             <nav className="hidden items-center gap-6 md:flex">
               {nav.map((n) => (
@@ -83,6 +100,9 @@ export default function AppShell() {
             {user ? (
               <>
                 <InboxBell />
+                <AppLink to="/messages" className="hidden text-sm font-semibold text-pa-muted sm:inline">
+                  Chat
+                </AppLink>
                 <AppLink to="/profile" className="text-sm font-semibold text-pa-forest">
                   Profile
                 </AppLink>
@@ -103,6 +123,7 @@ export default function AppShell() {
       <main className={bare ? '' : 'pb-nav'}>
         {bare ? <Outlet /> : <AdWrap><Outlet /></AdWrap>}
       </main>
+      <HamburgerMenu open={menuOpen} onClose={() => setMenuOpen(false)} onCreate={() => setCreateOpen(true)} />
       <BottomNav />
       <CreateSheet open={createOpen} onClose={() => setCreateOpen(false)} />
       {!bare && (

@@ -7,7 +7,7 @@ import { useCatalog } from '../contexts/CatalogContext';
 import { useAuth } from '../contexts/AuthContext';
 import { checkoutWithRedFacePay } from '../lib/redface-pay';
 import Avatar from '../components/Avatar';
-import CountryFlag from '../components/CountryFlag';
+import FollowButton from '../components/FollowButton';
 
 export default function PublicProfilePage() {
   const { handle } = useParams();
@@ -47,6 +47,7 @@ export default function PublicProfilePage() {
               {profile.country ? <CountryFlag code={profile.country} withName /> : null}
             </p>
             <p className="mt-2 text-sm text-pa-muted">{profile.bio}</p>
+            <FollowButton profileId={profile.id} />
             {profile.categories && profile.categories.length > 0 && (
               <p className="mt-2 text-sm">🐾 {profile.categories.join(' · ')}</p>
             )}

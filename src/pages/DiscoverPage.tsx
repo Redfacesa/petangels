@@ -1,18 +1,45 @@
 import type { ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCatalog } from '../contexts/CatalogContext';
+import { useAuth } from '../contexts/AuthContext';
 import Avatar from '../components/Avatar';
 import CountryFlag from '../components/CountryFlag';
+import FollowButton from '../components/FollowButton';
+import { loadFollowingIds } from '../lib/db';
+import { rankPeopleToFollow } from '../lib/social';
 
 export default function DiscoverPage() {
-  const { profiles, animals, pets, articles } = useCatalog();
+  const { user } = useAuth();
+  const { profiles, animals, pets, articles, place, profileById } = useCatalog();
   const [q, setQ] = useState('');
+  const [lens, setLens] = useState<'for_you' | 'dogs' | 'shelters'>('for_you');
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const mine = user ? profileById(user.id) : undefined;
   const needle = q.trim().toLowerCase();
   const people = profiles.filter((p) => p.type === 'pet_parent');
   const shops = profiles.filter((p) => p.type === 'merchant');
   const shelters = profiles.filter((p) => p.type === 'shelter');
   const looking = animals.filter((a) => a.status === 'looking_for_home');
+
+  useEffect(() => {
+    const id = mine?.id || user?.id;
+    if (!id) return;
+    void loadFollowingIds(id).then(setFollowingIds);
+  }, [mine?.id, user?.id]);
+
+  const suggested = useMemo(
+    () =>
+      rankPeopleToFollow({
+        profiles,
+        pets,
+        meId: mine?.id || user?.id,
+        followingIds,
+        place,
+        lens,
+      }).slice(0, 18),
+    [profiles, pets, mine?.id, user?.id, followingIds, place, lens],
+  );
 
   const hits = useMemo(() => {
     if (!needle) return null;
@@ -26,13 +53,59 @@ export default function DiscoverPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Discover</p>
-      <h1 className="mt-1 font-display text-3xl text-pa-ink">Animals, people, shops, shelters</h1>
+      <h1 className="mt-1 font-display text-3xl text-pa-ink">Follow people with dogs, and shelters</h1>
+      <p className="mt-2 text-sm text-pa-muted">
+        Ranked for you — nearby first, then shelters and members who actually have dogs.
+      </p>
       <input
         className="input mt-4"
         placeholder="Search people, pets, city…"
         value={q}
         onChange={(e) => setQ(e.target.value)}
       />
+      <div className="mt-4 flex flex-wrap gap-2">
+        {(
+          [
+            ['for_you', 'For you'],
+            ['dogs', 'People with dogs'],
+            ['shelters', 'Shelters'],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold ${lens === id ? 'bg-pa-forest text-white' : 'bg-pa-sand'}`}
+            onClick={() => setLens(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <Section title="People to follow">
+        {suggested.length === 0 ? (
+          <p className="text-sm text-pa-muted">Nobody to suggest yet — or paste the follows SQL so Follow can save.</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {suggested.map((p) => (
+              <div key={p.id} className="card p-4">
+                <Link to={`/u/${p.handle}`} className="flex items-center gap-3">
+                  <Avatar profile={p} className="h-14 w-14" />
+                  <div>
+                    <p className="font-semibold">
+                      {p.name} <CountryFlag code={p.country} />
+                    </p>
+                    <p className="text-xs text-pa-muted">
+                      {p.type === 'shelter' ? 'Shelter' : 'Pet parent'}
+                      {p.city ? ` · ${p.city}` : ''}
+                    </p>
+                  </div>
+                </Link>
+                <FollowButton profileId={p.id} />
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <Link to="/map" className="card p-4 font-semibold text-pa-forest">
           Shelter map — live

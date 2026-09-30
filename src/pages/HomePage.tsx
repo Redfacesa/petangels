@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import FeedCard from '../components/FeedCard';
 import { useCatalog } from '../contexts/CatalogContext';
+import { useAuth } from '../contexts/AuthContext';
 import { rankPosts } from '../lib/feed';
+import { loadFollowingIds } from '../lib/db';
 import type { ContentLane } from '../lib/types';
 
 const actions = [
@@ -15,20 +17,33 @@ const actions = [
 ];
 
 export default function HomePage() {
+  const { user } = useAuth();
   const { posts, loading, refreshing, refresh, lastUpdated, place, profileById } = useCatalog();
-  const [lane, setLane] = useState<ContentLane | 'all' | 'lost'>('all');
+  const [lane, setLane] = useState<ContentLane | 'all' | 'lost' | 'following'>('all');
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const mine = user ? profileById(user.id) : undefined;
+
+  useEffect(() => {
+    const id = mine?.id || user?.id;
+    if (!id) return;
+    void loadFollowingIds(id).then(setFollowingIds);
+  }, [mine?.id, user?.id]);
+
+  const followSet = useMemo(() => new Set(followingIds), [followingIds]);
   const shown = useMemo(() => {
     const ranked = rankPosts(posts, {
       place,
+      followingIds: followSet,
       authorPlace: (id) => {
         const p = profileById(id);
         return p ? { country: p.country, city: p.city } : undefined;
       },
     });
     if (lane === 'all') return ranked;
+    if (lane === 'following') return ranked.filter((p) => followSet.has(p.authorId));
     if (lane === 'lost') return ranked.filter((p) => p.kind === 'lost' || p.kind === 'found');
     return ranked.filter((p) => (p.lane || 'community') === lane);
-  }, [posts, lane, place, profileById]);
+  }, [posts, lane, place, profileById, followSet]);
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6">
@@ -60,6 +75,7 @@ export default function HomePage() {
         {(
           [
             ['all', 'All'],
+            ['following', 'Following'],
             ['community', 'Stories'],
             ['rescue', 'Rescue'],
             ['commerce', 'Shop'],

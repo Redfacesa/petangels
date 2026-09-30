@@ -6,6 +6,7 @@ function openLabel(href: string) {
   if (href.includes('/journal/') && href.includes('c=')) return 'Open comment';
   if (href.includes('/journal/')) return 'Open article';
   if (href.includes('c=')) return 'Open comment';
+  if (href.startsWith('/messages/')) return 'Open chat';
   if (href.startsWith('/posts/')) return 'Open post';
   return 'Open';
 }
@@ -33,6 +34,9 @@ export default function InboxPage() {
     <div className="mx-auto max-w-lg px-4 py-8">
       <div className="flex items-center justify-between gap-3">
         <h1 className="font-display text-3xl">Notifications</h1>
+        <Link to="/messages" className="text-sm font-semibold text-pa-forest">
+          Open chats
+        </Link>
         <button type="button" className="text-xs font-semibold text-pa-forest" onClick={() => void load()} disabled={busy}>
           {busy ? 'Updating…' : 'Refresh'}
         </button>
