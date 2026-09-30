@@ -28,6 +28,7 @@ import CountryFlag from '../components/CountryFlag';
 import { parseGender } from '../lib/types';
 import { COUNTRIES, parseCountry } from '../lib/geo';
 import { isStaffUser } from '../components/TrustBadges';
+import { PAYSTACK_ZA_BANKS, paystackZaBankByName, resolvePaystackZaBankName } from '../lib/paystack-banks';
 
 type Tab = 'posts' | 'animals' | 'market' | 'donations' | 'purchases' | 'payout' | 'activity' | 'edit';
 
@@ -46,6 +47,8 @@ export default function ProfilePage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
+  const [bankName, setBankName] = useState('');
+  const [branchCode, setBranchCode] = useState('');
 
   useEffect(() => {
     if (!user) return;
@@ -55,6 +58,12 @@ export default function ProfilePage() {
     void loadMySales(payeeId).then(setSales);
     void loadAdoptions().then(setAdoptions);
   }, [user, mine?.id]);
+
+  useEffect(() => {
+    const resolved = resolvePaystackZaBankName(payout?.bankName);
+    setBankName(resolved);
+    setBranchCode(payout?.branchCode || paystackZaBankByName(resolved)?.code || '');
+  }, [payout]);
 
   if (loading) return <p className="p-10 text-center text-pa-muted">Loading…</p>;
   if (!user) return null;
@@ -110,8 +119,12 @@ export default function ProfilePage() {
     try {
       await persistProfile();
       const payeeId = mine?.id || user.id;
+      const chosenBank = String(fd.get('bank_name') || '');
+      if (!paystackZaBankByName(chosenBank)) {
+        throw new Error('Choose a bank from the Paystack list.');
+      }
       await saveMyPayout(payeeId, {
-        bankName: String(fd.get('bank_name') || ''),
+        bankName: chosenBank,
         accountName: String(fd.get('account_name') || ''),
         accountNumber: String(fd.get('account_number') || ''),
         branchCode: String(fd.get('branch_code') || ''),
@@ -499,9 +512,27 @@ export default function ProfilePage() {
           <form className="space-y-3" onSubmit={(e) => void onPayout(e)}>
             <h2 className="font-display text-xl">1. Bank details</h2>
             <p className="text-sm text-pa-muted">
-              Private on Pet Angels. Submit these first. You then wait for approval.
+              Private on Pet Angels. Pick a bank Paystack can pay in South Africa, then wait for approval.
             </p>
-            <input name="bank_name" className="input" placeholder="Bank name" defaultValue={payout?.bankName} required />
+            <select
+              name="bank_name"
+              className="input"
+              required
+              value={bankName}
+              onChange={(e) => {
+                const next = e.target.value;
+                setBankName(next);
+                const bank = paystackZaBankByName(next);
+                if (bank) setBranchCode(bank.code);
+              }}
+            >
+              <option value="">Select bank</option>
+              {PAYSTACK_ZA_BANKS.map((b) => (
+                <option key={`${b.code}-${b.name}`} value={b.name}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
             <input
               name="account_name"
               className="input"
@@ -520,7 +551,8 @@ export default function ProfilePage() {
               name="branch_code"
               className="input"
               placeholder="Branch code"
-              defaultValue={payout?.branchCode}
+              value={branchCode}
+              onChange={(e) => setBranchCode(e.target.value)}
               required
             />
             <p className="text-sm font-semibold">

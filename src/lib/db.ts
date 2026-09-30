@@ -208,11 +208,7 @@ export const emptyCatalog: Catalog = {
 export async function loadCatalog(viewerId?: string): Promise<Catalog> {
   if (!supabase) return emptyCatalog;
   const [profiles, posts, listings, animals, cases, pets, care, articles, likes] = await Promise.all([
-    supabase
-      .from('pa_profiles')
-      .select(
-        'id, handle, name, account_type, bio, city, country, avatar_url, cover_url, gender, verified, pets, categories, redface_merchant_id, auth_user_id, is_staff, email_verified, phone_verified, business_verified, shelter_verified, caregiver_verified',
-      ),
+    supabase.from('pa_profiles').select('*'),
     supabase.from('pa_posts').select('*').order('created_at', { ascending: false }),
     supabase.from('pa_listings').select('*'),
     supabase.from('pa_animals').select('*'),
@@ -237,13 +233,8 @@ export async function loadCatalog(viewerId?: string): Promise<Catalog> {
   }
 
   if (profiles.error) {
-    const retry = await supabase
-      .from('pa_profiles')
-      .select('id, handle, name, account_type, bio, city, avatar_url, cover_url, verified, pets, categories, redface_merchant_id, auth_user_id, is_staff');
-    if (retry.error) return emptyCatalog;
     return {
       ...emptyCatalog,
-      profiles: (retry.data || []).map((row) => mapProfile(row as Record<string, unknown>)),
       posts: withLikeCounts((posts.data || []).map((row) => mapPost(row as Record<string, unknown>))),
       products: (listings.data || []).map((row) => mapProduct(row as Record<string, unknown>)),
       animals: (animals.data || []).map((row) => mapAnimal(row as Record<string, unknown>)),
@@ -826,14 +817,21 @@ export async function applyToAdopt(petId: string, applicantId: string, message: 
   if (error) throw error;
 }
 
+let adoptionsMissing = false;
+
 export async function loadAdoptions(): Promise<AdoptionRow[]> {
-  if (!supabase) return [];
+  if (!supabase || adoptionsMissing) return [];
   const { data, error } = await supabase
     .from('pa_adoptions')
     .select('id, pet_id, applicant_id, message, status, created_at')
     .order('created_at', { ascending: false })
     .limit(80);
-  if (error) return [];
+  if (error) {
+    const code = String(error.code || '');
+    const msg = String(error.message || '');
+    if (code === 'PGRST205' || /does not exist|schema cache/i.test(msg)) adoptionsMissing = true;
+    return [];
+  }
   return (data || []).map((r) => ({
     id: String(r.id),
     petId: String(r.pet_id),
@@ -890,11 +888,19 @@ export async function markNotificationsRead() {
   await supabase.from('pa_notifications').update({ read: true }).eq('read', false);
 }
 
+export type AdminMember = {
+  id: string;
+  handle: string;
+  name: string;
+  accountType: string;
+};
+
 export type AdminSnapshot = {
   members: number;
   posts: number;
   sellers: number;
   pendingPayouts: number;
+  people: AdminMember[];
   reports: { id: string; reason: string; welfare: boolean; status: string; createdAt: string }[];
   payouts: {
     profileId: string;
@@ -912,10 +918,10 @@ export type AdminSnapshot = {
 
 export async function loadAdminSnapshot(): Promise<AdminSnapshot> {
   if (!supabase) {
-    return { members: 0, posts: 0, sellers: 0, pendingPayouts: 0, reports: [], payouts: [] };
+    return { members: 0, posts: 0, sellers: 0, pendingPayouts: 0, people: [], reports: [], payouts: [] };
   }
   const [profiles, posts, listings, payouts, reports] = await Promise.all([
-    supabase.from('pa_profiles').select('id, account_type', { count: 'exact', head: false }),
+    supabase.from('pa_profiles').select('id, handle, name, account_type', { count: 'exact', head: false }),
     supabase.from('pa_posts').select('id', { count: 'exact', head: true }),
     supabase.from('pa_listings').select('seller_id'),
     supabase
@@ -932,11 +938,18 @@ export async function loadAdminSnapshot(): Promise<AdminSnapshot> {
           await supabase.from('pa_profiles').select('id, handle, name, account_type').in('id', payeeIds)
         ).data || [];
   const byId = new Map(names.map((r) => [String(r.id), r]));
+  const people = (profiles.data || []).map((r) => ({
+    id: String(r.id),
+    handle: String(r.handle || ''),
+    name: String(r.name || ''),
+    accountType: String(r.account_type || ''),
+  }));
   return {
-    members: profiles.data?.length || 0,
+    members: people.length,
     posts: posts.count || 0,
     sellers: new Set((listings.data || []).map((r) => r.seller_id)).size,
     pendingPayouts: payoutRows.filter((p) => p.status === 'submitted').length,
+    people,
     reports: (reports.data || []).map((r) => ({
       id: String(r.id),
       reason: String(r.reason),
@@ -977,8 +990,30 @@ export async function staffSetReportStatus(id: string, status: string) {
 
 export async function staffSetTrust(profileId: string, field: 'business_verified' | 'shelter_verified' | 'caregiver_verified', value: boolean) {
   if (!supabase) throw new Error('Database not configured');
-  const { error } = await supabase.from('pa_profiles').update({ [field]: value }).eq('id', profileId);
+  const key = profileId.trim().replace(/^@/, '');
+  if (!key) throw new Error('Choose a member.');
+  if (/^acct_/i.test(key)) {
+    throw new Error('That ACCT_ code is Paystack/RedFace, not a Pet Angels profile. Pick the person from the list or type their @handle.');
+  }
+  const { data: byId } = await supabase.from('pa_profiles').select('id').eq('id', key).maybeSingle();
+  let id = byId?.id ? String(byId.id) : '';
+  if (!id) {
+    const { data: byHandle } = await supabase.from('pa_profiles').select('id').eq('handle', key).maybeSingle();
+    id = byHandle?.id ? String(byHandle.id) : '';
+  }
+  if (!id) {
+    const { data: byAuth } = await supabase.from('pa_profiles').select('id').eq('auth_user_id', key).maybeSingle();
+    id = byAuth?.id ? String(byAuth.id) : '';
+  }
+  if (!id) throw new Error(`No member matches “${key}”. Use the dropdown, not a payment account id.`);
+  const { data, error } = await supabase.from('pa_profiles').update({ [field]: value }).eq('id', id).select(`id, handle, ${field}`).maybeSingle();
   if (error) throw error;
+  if (!data) {
+    throw new Error('Update did not apply. Paste the staff profile-update SQL (members can only edit themselves until then).');
+  }
+  if (!Boolean((data as Record<string, unknown>)[field])) {
+    throw new Error('The tick was reverted. Confirm redfacesa has is_staff = true, then paste the lock/staff SQL again.');
+  }
 }
 
 export async function insertListing(row: {

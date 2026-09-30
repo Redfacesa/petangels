@@ -18,6 +18,7 @@ export default function AdminPage() {
   const allowed = isStaffUser(user?.email, mine);
   const [snap, setSnap] = useState<AdminSnapshot | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     if (!allowed) return;
@@ -78,6 +79,7 @@ where (p.auth_user_id = u.id or p.id = u.id::text)
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-pa-muted">Pet Angels admin</p>
       <h1 className="font-display text-3xl">Operations</h1>
       {msg && <p className="mt-2 text-sm text-pa-forest">{msg}</p>}
+      {err && <p className="mt-2 text-sm text-rose-700">{err}</p>}
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Stat label="New members" value={snap?.members ?? '—'} />
         <Stat label="Posts" value={snap?.posts ?? '—'} />
@@ -174,13 +176,21 @@ where (p.auth_user_id = u.id or p.id = u.id::text)
       </ul>
 
       <h2 className="mt-10 font-display text-xl">Verification</h2>
-      <p className="text-sm text-pa-muted">Approve business, shelter, or caregiver on a profile (not one generic tick).</p>
+      <p className="text-sm text-pa-muted">
+        Pick the Pet Angels member. Do not paste a Paystack/RedFace <span className="font-semibold">ACCT_</span> code
+        — that is a payment account, not a profile.
+      </p>
       <VerifyForm
+        people={snap?.people || []}
         onSave={async (id, field) => {
+          setErr(null);
+          setMsg(null);
           await staffSetTrust(id, field, true);
           await refresh();
+          setSnap(await loadAdminSnapshot());
           setMsg('Trust flag saved.');
         }}
+        onFail={(message) => setErr(message)}
       />
       <p className="mt-8 text-xs text-pa-muted">
         First-time staff: in SQL, <code>update pa_profiles set is_staff = true where id = '&lt;you&gt;';</code>
@@ -201,24 +211,46 @@ function Stat({ label, value }: { label: string; value: number | string }) {
 }
 
 function VerifyForm({
+  people,
   onSave,
+  onFail,
 }: {
+  people: { id: string; handle: string; name: string; accountType: string }[];
   onSave: (id: string, field: 'business_verified' | 'shelter_verified' | 'caregiver_verified') => Promise<void>;
+  onFail: (message: string) => void;
 }) {
   const [id, setId] = useState('');
-  const [field, setField] = useState<'business_verified' | 'shelter_verified' | 'caregiver_verified'>('shelter_verified');
+  const [field, setField] = useState<'business_verified' | 'shelter_verified' | 'caregiver_verified'>('business_verified');
   return (
     <form
       className="mt-3 flex flex-col gap-2 sm:flex-row"
       onSubmit={(e) => {
         e.preventDefault();
-        void onSave(id, field);
+        void onSave(id, field).catch((err) => onFail(err instanceof Error ? err.message : 'Could not verify.'));
       }}
     >
-      <input className="input" placeholder="Profile user id" value={id} onChange={(e) => setId(e.target.value)} required />
+      <select
+        className="input"
+        value={id}
+        required
+        onChange={(e) => {
+          const next = e.target.value;
+          setId(next);
+          const p = people.find((m) => m.id === next);
+          if (p?.accountType === 'merchant') setField('business_verified');
+          if (p?.accountType === 'shelter') setField('shelter_verified');
+        }}
+      >
+        <option value="">Select member</option>
+        {people.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name} · @{p.handle} · {p.accountType || 'member'}
+          </option>
+        ))}
+      </select>
       <select className="input" value={field} onChange={(e) => setField(e.target.value as typeof field)}>
-        <option value="shelter_verified">Shelter</option>
         <option value="business_verified">Business</option>
+        <option value="shelter_verified">Shelter</option>
         <option value="caregiver_verified">Caregiver</option>
       </select>
       <button className="btn-primary" type="submit">
