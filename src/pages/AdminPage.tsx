@@ -81,12 +81,12 @@ where auth_user_id = '<your-auth-user-uuid>';`}
                 className="text-xs font-semibold text-pa-forest"
                 onClick={() =>
                   void staffSetPayoutStatus(p.profileId, 'issued').then(async () => {
-                    setMsg('Payout approved. They can paste a subaccount.');
+                    setMsg('Approved. Issue their RedFace subaccount, then they paste the pay link on Profile.');
                     setSnap(await loadAdminSnapshot());
                   })
                 }
               >
-                Approve
+                Approve · then issue RedFace subaccount
               </button>
             )}
           </li>

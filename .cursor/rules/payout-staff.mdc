@@ -1,0 +1,17 @@
+---
+description: Pet Angels staff payouts — bank on Pet Angels, money via RedFace subaccount
+alwaysApply: true
+---
+
+# Staff payouts (no secrets)
+
+Never store RedFace or bank passwords in the repo, env files, or chat-committed docs.
+
+Selling money path:
+
+1. Any member (shop, shelter, or parent) submits **bank details on Pet Angels** (Profile → Bank & payouts). Details stay private in `pa_payout_accounts`.
+2. **Pet Angels staff** signs in on **app.petangelssa.co.za**, opens **/admin**, sees submissions, taps **Approve** (`status = issued`).
+3. Staff issues a **RedFace Pay subaccount** in the RedFace operator dashboard (not in this codebase).
+4. The member pastes that subaccount / `redfacepay.co.za/pay/…` link on Pet Angels. Checkout uses that link so money goes to **their** bank via RedFace, not a platform shop.
+
+Staff on Pet Angels is `pa_profiles.is_staff = true` (and optional `VITE_STAFF_EMAILS`). Intended operator login: **redfacesa@gmail.com** (already in Auth). RedFace dashboard is a **separate** login. Do not mix credentials into the app.
