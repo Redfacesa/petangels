@@ -896,7 +896,7 @@ export type AdminSnapshot = {
   sellers: number;
   pendingPayouts: number;
   reports: { id: string; reason: string; welfare: boolean; status: string; createdAt: string }[];
-  payouts: { profileId: string; status: string; accountName: string; bankName: string }[];
+  payouts: { profileId: string; handle: string; name: string; status: string; accountName: string; bankName: string }[];
 };
 
 export async function loadAdminSnapshot(): Promise<AdminSnapshot> {
@@ -911,6 +911,14 @@ export async function loadAdminSnapshot(): Promise<AdminSnapshot> {
     supabase.from('pa_reports').select('id, reason, welfare, status, created_at').order('created_at', { ascending: false }).limit(40),
   ]);
   const payoutRows = payouts.data || [];
+  const payeeIds = [...new Set(payoutRows.map((p) => String(p.profile_id)))];
+  const names =
+    payeeIds.length === 0
+      ? []
+      : (
+          await supabase.from('pa_profiles').select('id, handle, name').in('id', payeeIds)
+        ).data || [];
+  const byId = new Map(names.map((r) => [String(r.id), r]));
   return {
     members: profiles.data?.length || 0,
     posts: posts.count || 0,
@@ -923,12 +931,17 @@ export async function loadAdminSnapshot(): Promise<AdminSnapshot> {
       status: String(r.status),
       createdAt: String(r.created_at),
     })),
-    payouts: payoutRows.map((p) => ({
-      profileId: String(p.profile_id),
-      status: String(p.status),
-      accountName: String(p.account_name || ''),
-      bankName: String(p.bank_name || ''),
-    })),
+    payouts: payoutRows.map((p) => {
+      const who = byId.get(String(p.profile_id));
+      return {
+        profileId: String(p.profile_id),
+        handle: String(who?.handle || ''),
+        name: String(who?.name || ''),
+        status: String(p.status),
+        accountName: String(p.account_name || ''),
+        bankName: String(p.bank_name || ''),
+      };
+    }),
   };
 }
 

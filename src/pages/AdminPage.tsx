@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCatalog } from '../contexts/CatalogContext';
 import { isStaffUser } from '../components/TrustBadges';
@@ -25,7 +25,32 @@ export default function AdminPage() {
   }, [allowed]);
 
   if (!user) return null;
-  if (!allowed) return <Navigate to="/home" replace />;
+  if (!allowed) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16">
+        <h1 className="font-display text-3xl">Staff only</h1>
+        <p className="mt-3 text-sm text-pa-muted">
+          Bank approvals are not on RedFace Pay or a merchant website. They live here, on Pet Angels, after your
+          own login is marked as staff.
+        </p>
+        <p className="mt-3 text-sm text-pa-muted">
+          Sign in with the Pet Angels email you use as operator, then in Supabase SQL:
+        </p>
+        <pre className="mt-3 overflow-x-auto rounded-2xl bg-pa-sand p-3 text-xs">
+          {`update public.pa_profiles
+set is_staff = true
+where auth_user_id = '<your-auth-user-uuid>';`}
+        </pre>
+        <p className="mt-3 text-sm text-pa-muted">
+          Refresh, open <span className="font-semibold">Profile</span>, tap <span className="font-semibold">Admin</span>,
+          or go to <span className="font-semibold">app.petangelssa.co.za/admin</span>.
+        </p>
+        <Link to="/home" className="btn-primary mt-6 inline-flex">
+          Back to feed
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -45,7 +70,10 @@ export default function AdminPage() {
         {(snap?.payouts || []).map((p) => (
           <li key={p.profileId} className="card flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
             <span>
-              {p.accountName} · {p.bankName} · {p.status}
+              <span className="font-semibold">{p.name || p.accountName}</span>
+              {p.handle ? ` · @${p.handle}` : ''}
+              {' · '}
+              {p.bankName} · {p.status}
             </span>
             {p.status === 'submitted' && (
               <button

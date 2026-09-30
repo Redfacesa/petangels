@@ -206,8 +206,8 @@ export default function ProfilePage() {
             </p>
             {mine && <TrustBadges profile={mine} emailConfirmed={Boolean(user.email_confirmed_at)} />}
             {isStaffUser(user.email, mine) && (
-              <Link to="/admin" className="mt-2 inline-block text-xs font-semibold text-pa-forest">
-                Admin
+              <Link to="/admin" className="mt-2 inline-block rounded-full bg-pa-forest px-3 py-1 text-xs font-semibold text-white">
+                Admin · approve banks
               </Link>
             )}
             <button type="button" className="mt-3 block text-sm font-semibold text-pa-forest" onClick={() => setTab('payout')}>
