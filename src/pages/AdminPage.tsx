@@ -12,7 +12,7 @@ import {
 } from '../lib/db';
 
 export default function AdminPage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { profileById, refresh } = useCatalog();
   const mine = user ? profileById(user.id) : undefined;
   const allowed = isStaffUser(user?.email, mine);
@@ -24,28 +24,49 @@ export default function AdminPage() {
     void loadAdminSnapshot().then(setSnap);
   }, [allowed]);
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16">
+        <h1 className="font-display text-3xl">Staff login</h1>
+        <p className="mt-3 text-sm text-pa-muted">
+          There is no extra admin password. Use the normal Pet Angels sign-in with{' '}
+          <span className="font-semibold">redfacesa@gmail.com</span>.
+        </p>
+        <Link to="/login?next=/admin" className="btn-primary mt-6 inline-flex">
+          Sign in
+        </Link>
+      </div>
+    );
+  }
   if (!allowed) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16">
         <h1 className="font-display text-3xl">Staff only</h1>
-        <p className="mt-3 text-sm text-pa-muted">
-          Bank approvals are not on RedFace Pay or a merchant website. They live here, on Pet Angels, after your
-          own login is marked as staff.
+        <p className="mt-3 text-sm text-stone-700">
+          You are signed in as <span className="font-semibold">{user.email || 'unknown'}</span>.
         </p>
         <p className="mt-3 text-sm text-pa-muted">
-          Sign in with the Pet Angels email you use as operator, then in Supabase SQL:
+          Pet Angels has no separate admin password. Sign <span className="font-semibold">out</span>, then sign in
+          with <span className="font-semibold">redfacesa@gmail.com</span> (the account already in the database).
+        </p>
+        <p className="mt-3 text-sm text-pa-muted">
+          After that, paste this once in Supabase so the database will also show bank submissions:
         </p>
         <pre className="mt-3 overflow-x-auto rounded-2xl bg-pa-sand p-3 text-xs">
-          {`update public.pa_profiles
+          {`update public.pa_profiles p
 set is_staff = true
-where auth_user_id = '<your-auth-user-uuid>';`}
+from auth.users u
+where (p.auth_user_id = u.id or p.id = u.id::text)
+  and lower(u.email) = 'redfacesa@gmail.com';`}
         </pre>
-        <p className="mt-3 text-sm text-pa-muted">
-          Refresh, open <span className="font-semibold">Profile</span>, tap <span className="font-semibold">Admin</span>,
-          or go to <span className="font-semibold">app.petangelssa.co.za/admin</span>.
-        </p>
-        <Link to="/home" className="btn-primary mt-6 inline-flex">
+        <button
+          type="button"
+          className="btn-primary mt-6 w-full"
+          onClick={() => void signOut().then(() => (window.location.href = '/login?next=/admin'))}
+        >
+          Sign out and use redfacesa@gmail.com
+        </button>
+        <Link to="/home" className="mt-4 block text-center text-sm font-semibold text-pa-forest">
           Back to feed
         </Link>
       </div>

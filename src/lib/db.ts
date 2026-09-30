@@ -239,7 +239,7 @@ export async function loadCatalog(viewerId?: string): Promise<Catalog> {
   if (profiles.error) {
     const retry = await supabase
       .from('pa_profiles')
-      .select('id, handle, name, account_type, bio, city, avatar_url, cover_url, verified, pets, categories, redface_merchant_id, auth_user_id');
+      .select('id, handle, name, account_type, bio, city, avatar_url, cover_url, verified, pets, categories, redface_merchant_id, auth_user_id, is_staff');
     if (retry.error) return emptyCatalog;
     return {
       ...emptyCatalog,
