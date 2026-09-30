@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCatalog } from '../contexts/CatalogContext';
 import { isStaffUser } from '../components/TrustBadges';
+import { REDFACE_PAY_URL } from '../lib/config';
 import {
   loadAdminSnapshot,
+  staffAttachPayLink,
   staffSetPayoutStatus,
   staffSetReportStatus,
   staffSetTrust,
@@ -129,17 +131,28 @@ where (p.auth_user_id = u.id or p.id = u.id::text)
                   type="button"
                   className="btn-primary !py-2 !text-sm"
                   onClick={() =>
-                    void staffSetPayoutStatus(p.profileId, 'issued').then(async () => {
-                      setMsg(
-                        `Approved ${p.name || p.handle}. In RedFace, issue a subaccount for that bank. They then paste the pay URL on Profile.`,
-                      );
-                      setSnap(await loadAdminSnapshot());
-                    })
+                    void staffSetPayoutStatus(p.profileId, 'issued')
+                      .then(async () => {
+                        setMsg(`Bank approved for ${p.name || p.handle}. Next: paste their RedFace subaccount on this card.`);
+                        setSnap(await loadAdminSnapshot());
+                      })
+                      .catch((e) => setErr(e instanceof Error ? e.message : 'Could not approve.'))
                   }
                 >
-                  Approve this person · then issue their RedFace subaccount
+                  Approve bank details
                 </button>
               )}
+              <StaffPayLink
+                profileId={p.profileId}
+                merchantId={p.merchantId}
+                onDone={async (link) => {
+                  setErr(null);
+                  setMsg(`Pay link is on their Profile → Bank: ${link}`);
+                  setSnap(await loadAdminSnapshot());
+                  await refresh();
+                }}
+                onFail={(message) => setErr(message)}
+              />
             </li>
           );
         })}
@@ -198,6 +211,54 @@ where (p.auth_user_id = u.id or p.id = u.id::text)
         <Link to="/home">Back to feed</Link>
       </p>
     </div>
+  );
+}
+
+function StaffPayLink({
+  profileId,
+  merchantId,
+  onDone,
+  onFail,
+}: {
+  profileId: string;
+  merchantId: string;
+  onDone: (link: string) => Promise<void>;
+  onFail: (message: string) => void;
+}) {
+  const [raw, setRaw] = useState('');
+  const link = merchantId ? `${REDFACE_PAY_URL.replace(/\/$/, '')}/pay/${merchantId}` : null;
+  return (
+    <form
+      className="space-y-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void staffAttachPayLink(profileId, raw)
+          .then(async (id) => {
+            setRaw('');
+            await onDone(`${REDFACE_PAY_URL.replace(/\/$/, '')}/pay/${id}`);
+          })
+          .catch((err) => onFail(err instanceof Error ? err.message : 'Could not save pay link.'));
+      }}
+    >
+      <p className="text-xs text-pa-muted">
+        Create their subaccount in RedFace, then paste the id or /pay/… link here. It shows on their Profile → Bank.
+      </p>
+      {link && (
+        <a className="block break-all text-xs font-semibold text-pa-forest" href={link}>
+          {link}
+        </a>
+      )}
+      <input
+        className="input"
+        value={raw}
+        onChange={(e) => setRaw(e.target.value)}
+        placeholder="Subaccount id or https://www.redfacepay.co.za/pay/…"
+        required
+      />
+      <button className="text-sm font-semibold text-pa-forest" type="submit">
+        Save pay link on their profile
+      </button>
+    </form>
   );
 }
 

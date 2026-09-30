@@ -926,6 +926,7 @@ export type AdminSnapshot = {
     branchCode: string;
     updatedAt: string;
     accountType: string;
+    merchantId: string;
   }[];
 };
 
@@ -948,7 +949,7 @@ export async function loadAdminSnapshot(): Promise<AdminSnapshot> {
     payeeIds.length === 0
       ? []
       : (
-          await supabase.from('pa_profiles').select('id, handle, name, account_type').in('id', payeeIds)
+          await supabase.from('pa_profiles').select('id, handle, name, account_type, redface_merchant_id').in('id', payeeIds)
         ).data || [];
   const byId = new Map(names.map((r) => [String(r.id), r]));
   const people = (profiles.data || []).map((r) => ({
@@ -984,6 +985,7 @@ export async function loadAdminSnapshot(): Promise<AdminSnapshot> {
         branchCode: String(p.branch_code || ''),
         updatedAt: String(p.updated_at || ''),
         accountType: String(who?.account_type || ''),
+        merchantId: String(who?.redface_merchant_id || ''),
       };
     }),
   };
@@ -993,6 +995,11 @@ export async function staffSetPayoutStatus(profileId: string, status: 'submitted
   if (!supabase) throw new Error('Database not configured');
   const { error } = await supabase.from('pa_payout_accounts').update({ status }).eq('profile_id', profileId);
   if (error) throw error;
+}
+
+export async function staffAttachPayLink(profileId: string, raw: string) {
+  await staffSetPayoutStatus(profileId, 'issued');
+  return saveMySubaccount(profileId, raw);
 }
 
 export async function staffSetReportStatus(id: string, status: string) {
