@@ -307,16 +307,18 @@ export function findArticle(catalog: Catalog, id: string) {
 export function parseSubaccountInput(raw: string) {
   const t = raw.trim();
   if (!t) return '';
+  if (/paystack/i.test(t) || /^acct_/i.test(t) || /^vt_/i.test(t)) return '';
+  let id = t;
   try {
     const u = new URL(t);
     const fromPath = u.pathname.match(/\/pay\/([^/]+)/);
-    if (fromPath?.[1]) return decodeURIComponent(fromPath[1]);
+    if (fromPath?.[1]) id = decodeURIComponent(fromPath[1]);
   } catch {
-    /* pasted id, not a URL */
+    const tail = t.match(/\/pay\/([^/?#]+)/);
+    if (tail?.[1]) id = decodeURIComponent(tail[1]);
   }
-  const tail = t.match(/\/pay\/([^/?#]+)/);
-  if (tail?.[1]) return decodeURIComponent(tail[1]);
-  return t;
+  if (/^acct_/i.test(id) || /^vt_/i.test(id) || /paystack/i.test(id)) return '';
+  return id;
 }
 
 export async function upsertMyProfile(input: {
@@ -450,7 +452,7 @@ export async function saveMyPayout(profileId: string, input: Omit<PayoutAccount,
 export async function saveMySubaccount(profileId: string, raw: string) {
   if (!supabase) throw new Error('Database not configured');
   const merchantId = parseSubaccountInput(raw);
-  if (!merchantId) throw new Error('Paste a RedFace subaccount id or pay URL');
+  if (!merchantId) throw new Error('Use a RedFace subaccount id or redfacepay.co.za/pay/… link — not a Paystack ACCT_ or vt_ code.');
   const { error } = await supabase
     .from('pa_profiles')
     .update({ redface_merchant_id: merchantId })
