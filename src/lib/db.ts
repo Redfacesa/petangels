@@ -896,7 +896,18 @@ export type AdminSnapshot = {
   sellers: number;
   pendingPayouts: number;
   reports: { id: string; reason: string; welfare: boolean; status: string; createdAt: string }[];
-  payouts: { profileId: string; handle: string; name: string; status: string; accountName: string; bankName: string }[];
+  payouts: {
+    profileId: string;
+    handle: string;
+    name: string;
+    status: string;
+    accountName: string;
+    bankName: string;
+    accountLast4: string;
+    branchCode: string;
+    updatedAt: string;
+    accountType: string;
+  }[];
 };
 
 export async function loadAdminSnapshot(): Promise<AdminSnapshot> {
@@ -907,7 +918,9 @@ export async function loadAdminSnapshot(): Promise<AdminSnapshot> {
     supabase.from('pa_profiles').select('id, account_type', { count: 'exact', head: false }),
     supabase.from('pa_posts').select('id', { count: 'exact', head: true }),
     supabase.from('pa_listings').select('seller_id'),
-    supabase.from('pa_payout_accounts').select('profile_id, status, account_name, bank_name'),
+    supabase
+      .from('pa_payout_accounts')
+      .select('profile_id, status, account_name, bank_name, account_number, branch_code, updated_at'),
     supabase.from('pa_reports').select('id, reason, welfare, status, created_at').order('created_at', { ascending: false }).limit(40),
   ]);
   const payoutRows = payouts.data || [];
@@ -916,7 +929,7 @@ export async function loadAdminSnapshot(): Promise<AdminSnapshot> {
     payeeIds.length === 0
       ? []
       : (
-          await supabase.from('pa_profiles').select('id, handle, name').in('id', payeeIds)
+          await supabase.from('pa_profiles').select('id, handle, name, account_type').in('id', payeeIds)
         ).data || [];
   const byId = new Map(names.map((r) => [String(r.id), r]));
   return {
@@ -933,6 +946,7 @@ export async function loadAdminSnapshot(): Promise<AdminSnapshot> {
     })),
     payouts: payoutRows.map((p) => {
       const who = byId.get(String(p.profile_id));
+      const num = String(p.account_number || '').replace(/\s/g, '');
       return {
         profileId: String(p.profile_id),
         handle: String(who?.handle || ''),
@@ -940,6 +954,10 @@ export async function loadAdminSnapshot(): Promise<AdminSnapshot> {
         status: String(p.status),
         accountName: String(p.account_name || ''),
         bankName: String(p.bank_name || ''),
+        accountLast4: num.length >= 4 ? num.slice(-4) : num,
+        branchCode: String(p.branch_code || ''),
+        updatedAt: String(p.updated_at || ''),
+        accountType: String(who?.account_type || ''),
       };
     }),
   };

@@ -87,32 +87,63 @@ where (p.auth_user_id = u.id or p.id = u.id::text)
       </div>
 
       <h2 className="mt-10 font-display text-xl">Payouts</h2>
-      <ul className="mt-3 space-y-2">
-        {(snap?.payouts || []).map((p) => (
-          <li key={p.profileId} className="card flex flex-wrap items-center justify-between gap-2 p-3 text-sm">
-            <span>
-              <span className="font-semibold">{p.name || p.accountName}</span>
-              {p.handle ? ` · @${p.handle}` : ''}
-              {' · '}
-              {p.bankName} · {p.status}
-            </span>
-            {p.status === 'submitted' && (
-              <button
-                type="button"
-                className="text-xs font-semibold text-pa-forest"
-                onClick={() =>
-                  void staffSetPayoutStatus(p.profileId, 'issued').then(async () => {
-                    setMsg('Approved. Issue their RedFace subaccount, then they paste the pay link on Profile.');
-                    setSnap(await loadAdminSnapshot());
-                  })
-                }
-              >
-                Approve · then issue RedFace subaccount
-              </button>
-            )}
-          </li>
-        ))}
-        {snap?.payouts.length === 0 && <p className="text-sm text-pa-muted">No payout submissions.</p>}
+      <p className="mt-1 text-sm text-pa-muted">
+        Pending ({snap?.pendingPayouts ?? 0}) is the list below — one card per person who saved Bank &amp; payouts.
+        {snap?.payouts.length === 1 &&
+        (snap.payouts[0].profileId === user.id || snap.payouts[0].profileId === mine?.id)
+          ? ' Right now that is this login (@redfacesa). Other shops only appear after they save their own bank form.'
+          : ''}
+      </p>
+      <ul className="mt-3 space-y-3">
+        {(snap?.payouts || []).map((p) => {
+          const isYou = p.profileId === user.id || p.profileId === mine?.id;
+          return (
+            <li key={p.profileId} className="card space-y-2 p-4 text-sm">
+              <p className="font-display text-lg text-pa-ink">
+                {p.name || p.accountName || 'Unknown member'}
+                {isYou ? ' · this is you' : ''}
+              </p>
+              <p>
+                {p.handle ? (
+                  <Link to={`/u/${p.handle}`} className="font-semibold text-pa-forest">
+                    @{p.handle}
+                  </Link>
+                ) : (
+                  <span className="text-pa-muted">no handle</span>
+                )}
+                {p.accountType ? ` · ${p.accountType}` : ''}
+                {' · '}
+                {p.status}
+              </p>
+              <p className="text-pa-muted">
+                Account name: {p.accountName || '—'} · {p.bankName || 'no bank'} · last 4 {p.accountLast4 || '—'}
+                {p.branchCode ? ` · branch ${p.branchCode}` : ''}
+              </p>
+              {p.updatedAt && (
+                <p className="text-xs text-pa-muted">Submitted {new Date(p.updatedAt).toLocaleString()}</p>
+              )}
+              {p.status === 'submitted' && (
+                <button
+                  type="button"
+                  className="btn-primary !py-2 !text-sm"
+                  onClick={() =>
+                    void staffSetPayoutStatus(p.profileId, 'issued').then(async () => {
+                      setMsg(
+                        `Approved ${p.name || p.handle}. In RedFace, issue a subaccount for that bank. They then paste the pay URL on Profile.`,
+                      );
+                      setSnap(await loadAdminSnapshot());
+                    })
+                  }
+                >
+                  Approve this person · then issue their RedFace subaccount
+                </button>
+              )}
+            </li>
+          );
+        })}
+        {snap?.payouts.length === 0 && (
+          <p className="text-sm text-pa-muted">Nobody has saved bank details yet. Pending would be 0.</p>
+        )}
       </ul>
 
       <h2 className="mt-10 font-display text-xl">Reports</h2>

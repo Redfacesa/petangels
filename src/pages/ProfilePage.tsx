@@ -49,11 +49,12 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) return;
-    void loadMyPayout(user.id).then(setPayout);
+    const payeeId = mine?.id || user.id;
+    void loadMyPayout(payeeId).then(setPayout);
     void loadMyReceipts(user.id).then(setBought);
-    void loadMySales(user.id).then(setSales);
+    void loadMySales(payeeId).then(setSales);
     void loadAdoptions().then(setAdoptions);
-  }, [user]);
+  }, [user, mine?.id]);
 
   if (loading) return <p className="p-10 text-center text-pa-muted">Loading…</p>;
   if (!user) return null;
@@ -108,13 +109,14 @@ export default function ProfilePage() {
     const fd = new FormData(e.currentTarget);
     try {
       await persistProfile();
-      await saveMyPayout(user.id, {
+      const payeeId = mine?.id || user.id;
+      await saveMyPayout(payeeId, {
         bankName: String(fd.get('bank_name') || ''),
         accountName: String(fd.get('account_name') || ''),
         accountNumber: String(fd.get('account_number') || ''),
         branchCode: String(fd.get('branch_code') || ''),
       });
-      setPayout(await loadMyPayout(user.id));
+      setPayout(await loadMyPayout(payeeId));
       setMsg('Bank details submitted. Status: waiting for approval.');
       setTab('payout');
     } catch (e) {
@@ -127,7 +129,7 @@ export default function ProfilePage() {
     setErr(null);
     const fd = new FormData(e.currentTarget);
     try {
-      const id = await saveMySubaccount(user.id, String(fd.get('subaccount') || ''));
+      const id = await saveMySubaccount(mine?.id || user.id, String(fd.get('subaccount') || ''));
       await refresh();
       setMsg(`Pay URL ready: ${REDFACE_PAY_URL}/pay/${id}`);
     } catch (e) {
