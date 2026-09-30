@@ -117,7 +117,7 @@ export default function ProfilePage() {
     setErr(null);
     const fd = new FormData(e.currentTarget);
     try {
-      await persistProfile();
+      if (!mine) await persistProfile();
       const payeeId = mine?.id || user.id;
       const chosenBank = String(fd.get('bank_name') || '');
       if (!paystackZaBankByName(chosenBank)) {

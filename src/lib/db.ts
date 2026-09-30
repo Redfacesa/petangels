@@ -418,11 +418,24 @@ export async function loadMyPayout(profileId: string): Promise<PayoutAccount | n
   };
 }
 
+function throwAuthOr(error: { message?: string; status?: number; code?: string }) {
+  const text = String(error.message || error.code || '');
+  if (error.status === 401 || /jwt|expired|not authenticated|unauthorized/i.test(text)) {
+    throw new Error('Your login expired. Sign out, sign in on this same Pet Angels site, then submit bank details again.');
+  }
+  throw new Error(text || 'Could not save bank details.');
+}
+
 export async function saveMyPayout(profileId: string, input: Omit<PayoutAccount, 'status'>) {
   if (!supabase) throw new Error('Database not configured');
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !userData.user) throwAuthOr(userErr || { status: 401, message: 'unauthorized' });
+  const uid = userData.user.id;
+  const { data: prof } = await supabase.from('pa_profiles').select('id').eq('auth_user_id', uid).maybeSingle();
+  const payeeId = prof?.id || profileId || uid;
   const { error } = await supabase.from('pa_payout_accounts').upsert(
     {
-      profile_id: profileId,
+      profile_id: payeeId,
       bank_name: input.bankName,
       account_name: input.accountName,
       account_number: input.accountNumber,
@@ -431,7 +444,7 @@ export async function saveMyPayout(profileId: string, input: Omit<PayoutAccount,
     },
     { onConflict: 'profile_id' },
   );
-  if (error) throw error;
+  if (error) throwAuthOr(error);
 }
 
 export async function saveMySubaccount(profileId: string, raw: string) {
