@@ -17,9 +17,11 @@ export function scorePost(post: Post, ctx?: RankContext) {
   const hours = ageHours(post.createdAt);
   const recency = 48 / (hours + 3);
   const fresh = hours < 2 ? 12 : hours < 12 ? 5 : 0;
-  const engagement = post.likes * 4.2 + post.comments * 9;
-  const velocity = (post.likes + post.comments * 2) / Math.sqrt(hours + 1);
-  const photos = post.images.length ? 2 + Math.min(post.images.length, 6) * 0.45 : 0;
+  const photos = post.images?.length ? 2 + Math.min(post.images.length, 6) * 0.45 : 0;
+  const likes = Number(post.likes || 0);
+  const comments = Number(post.comments || 0);
+  const engagement = likes * 4.2 + comments * 9;
+  const velocity = (likes + comments * 2) / Math.sqrt(hours + 1);
   let purpose = 2;
   if (post.kind === 'lost' || post.kind === 'found') purpose = 14;
   else if (post.lane === 'rescue' || post.kind === 'adoption') purpose = 6;

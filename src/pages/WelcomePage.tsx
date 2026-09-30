@@ -7,6 +7,7 @@ import { useCatalog } from '../contexts/CatalogContext';
 import AdSlot from '../components/AdSlot';
 import { ADSENSE_SLOT_WRAP } from '../lib/config';
 import { isNativeApp } from '../lib/native';
+import { APP_URL } from '../lib/hosts';
 
 const HERO = '/brand/hero-dogs.png';
 const CAT = '/brand/hero-cat.png';
@@ -17,8 +18,8 @@ const WALK = '/brand/hero-walk.png';
 export default function WelcomePage() {
   const { user } = useAuth();
   const { articles, products, profileById } = useCatalog();
-  const journal = articles.slice(0, 6);
-  const shop = products.filter((p) => p.kind === 'product').slice(0, 8);
+  const journal = (articles || []).slice(0, 6);
+  const shop = (products || []).filter((p) => p.kind === 'product').slice(0, 8);
   return (
     <div className="bg-pa-cream">
       <section className="relative min-h-[88vh] overflow-hidden">

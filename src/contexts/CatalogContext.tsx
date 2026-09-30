@@ -25,7 +25,11 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [place, setPlaceState] = useState<Place>(loadPlace);
+  const [place, setPlaceState] = useState<Place>({ country: 'ZA', city: '' });
+
+  useEffect(() => {
+    setPlaceState(loadPlace());
+  }, []);
 
   const syncedPlace = useRef(false);
 
