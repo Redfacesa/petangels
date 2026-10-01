@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useCatalog } from '../contexts/CatalogContext';
 import { useAuth } from '../contexts/AuthContext';
+import FollowButton from '../components/FollowButton';
 import CountryFlag from '../components/CountryFlag';
 
 export default function JournalPage() {
@@ -29,16 +30,27 @@ export default function JournalPage() {
           {articles.map((a) => {
             const author = profileById(a.authorId);
             return (
-              <Link key={a.id} to={`/journal/${a.id}`} className="card block overflow-hidden">
-                {a.cover ? <img src={a.cover} alt="" className="h-44 w-full object-cover" /> : null}
-                <div className="p-4">
-                  <h2 className="font-display text-xl">{a.title}</h2>
-                  <p className="mt-1 text-xs text-pa-muted">
-                    {author?.name} {author ? <CountryFlag code={author.country} /> : null}
-                  </p>
-                  <p className="mt-2 text-sm text-stone-700">{a.excerpt}</p>
+              <article key={a.id} className="card overflow-hidden">
+                <Link to={`/journal/${a.id}`}>
+                  {a.cover ? <img src={a.cover} alt="" className="h-44 w-full object-cover" /> : null}
+                  <div className="p-4 pb-0">
+                    <h2 className="font-display text-xl">{a.title}</h2>
+                    <p className="mt-2 text-sm text-stone-700">{a.excerpt}</p>
+                  </div>
+                </Link>
+                <div className="p-4 pt-2">
+                  {author ? (
+                    <>
+                      <Link to={`/u/${author.handle}`} className="text-xs font-semibold text-pa-muted">
+                        {author.name} <CountryFlag code={author.country} />
+                      </Link>
+                      <FollowButton profileId={author.id} compact />
+                    </>
+                  ) : (
+                    <p className="text-xs text-pa-muted">Author</p>
+                  )}
                 </div>
-              </Link>
+              </article>
             );
           })}
         </div>

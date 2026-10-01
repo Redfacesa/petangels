@@ -1156,6 +1156,13 @@ export async function recordPayHandoff(input: {
   return fallback.data?.id ? String(fallback.data.id) : null;
 }
 
+export async function loadFollowerIds(followeeId: string): Promise<string[]> {
+  if (!supabase || !followeeId) return [];
+  const { data, error } = await supabase.from('pa_follows').select('follower_id').eq('followee_id', followeeId);
+  if (error) return [];
+  return (data || []).map((r) => String(r.follower_id));
+}
+
 export async function loadFollowingIds(followerId: string): Promise<string[]> {
   if (!supabase || !followerId) return [];
   const { data, error } = await supabase.from('pa_follows').select('followee_id').eq('follower_id', followerId);

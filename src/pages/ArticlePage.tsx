@@ -2,6 +2,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useCatalog } from '../contexts/CatalogContext';
 import { useAuth } from '../contexts/AuthContext';
 import CommentThread from '../components/CommentThread';
+import FollowButton from '../components/FollowButton';
 import CountryFlag from '../components/CountryFlag';
 
 export default function ArticlePage() {
@@ -22,9 +23,12 @@ export default function ArticlePage() {
       {article.cover ? <img src={article.cover} alt="" className="mt-4 h-64 w-full rounded-3xl object-cover" /> : null}
       <h1 className="mt-4 font-display text-4xl">{article.title}</h1>
       {author && (
-        <Link to={`/u/${author.handle}`} className="mt-2 inline-flex items-center gap-2 text-sm text-pa-muted">
-          {author.name} <CountryFlag code={author.country} />
-        </Link>
+        <div className="mt-3">
+          <Link to={`/u/${author.handle}`} className="inline-flex items-center gap-2 text-sm font-semibold text-pa-ink">
+            {author.name} <CountryFlag code={author.country} />
+          </Link>
+          <FollowButton profileId={author.id} compact />
+        </div>
       )}
       <div className="mt-6 whitespace-pre-wrap text-sm leading-relaxed text-stone-700">{article.body}</div>
       <div className="mt-8">
