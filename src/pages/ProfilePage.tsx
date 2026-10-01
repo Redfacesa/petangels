@@ -20,7 +20,7 @@ import {
 } from '../lib/db';
 import { uploadPetImage } from '../lib/media';
 import ProductCard from '../components/ProductCard';
-import TrustBadges from '../components/TrustBadges';
+import TrustBadges, { isStaffUser } from '../components/TrustBadges';
 import PaymentSetup from '../components/PaymentSetup';
 import PostGrid from '../components/PostGrid';
 import Avatar from '../components/Avatar';

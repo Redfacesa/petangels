@@ -1228,23 +1228,42 @@ export async function loadMyChats(myProfileId: string): Promise<ChatPreview[]> {
   return previews;
 }
 
-export type ChatMessage = { id: string; senderId: string; body: string; createdAt: string };
+export type ChatMessage = { id: string; senderId: string; body: string; createdAt: string; readAt: string | null };
 
 export async function loadChatMessages(chatId: string): Promise<ChatMessage[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase
+  const full = await supabase
     .from('pa_chat_messages')
-    .select('id, sender_id, body, created_at')
+    .select('id, sender_id, body, created_at, read_at')
     .eq('chat_id', chatId)
     .order('created_at', { ascending: true })
     .limit(200);
-  if (error) return [];
-  return (data || []).map((r) => ({
+  const { data, error } = full.error
+    ? await supabase
+        .from('pa_chat_messages')
+        .select('id, sender_id, body, created_at')
+        .eq('chat_id', chatId)
+        .order('created_at', { ascending: true })
+        .limit(200)
+    : full;
+  if (error || !data) return [];
+  return data.map((r) => ({
     id: String(r.id),
     senderId: String(r.sender_id),
     body: String(r.body),
     createdAt: String(r.created_at),
+    readAt: r.read_at ? String(r.read_at) : null,
   }));
+}
+
+export async function markChatRead(chatId: string, myProfileId: string) {
+  if (!supabase || !chatId || !myProfileId) return;
+  await supabase
+    .from('pa_chat_messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('chat_id', chatId)
+    .neq('sender_id', myProfileId)
+    .is('read_at', null);
 }
 
 export async function sendChatMessage(chatId: string, senderId: string, body: string) {

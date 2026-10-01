@@ -6,6 +6,7 @@ import Avatar from '../components/Avatar';
 import {
   loadChatMessages,
   loadMyChats,
+  markChatRead,
   openChatWith,
   sendChatMessage,
   type ChatMessage,
@@ -73,6 +74,7 @@ function Thread({ chatId, meId, onSent }: { chatId: string; meId: string; onSent
   const [busy, setBusy] = useState(false);
 
   async function load() {
+    await markChatRead(chatId, meId);
     setRows(await loadChatMessages(chatId));
   }
 
@@ -108,7 +110,14 @@ function Thread({ chatId, meId, onSent }: { chatId: string; meId: string; onSent
             <li key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${mine ? 'bg-pa-forest text-white' : 'bg-pa-sand'}`}>
                 {!mine && <p className="text-[10px] font-semibold opacity-80">{who?.name}</p>}
-                <p>{m.body}</p>
+                <p>
+                  {m.body}
+                  {mine && (
+                    <span className="ml-1 text-[10px] tracking-tight opacity-80" title={m.readAt ? 'Read' : 'Sent'}>
+                      {m.readAt ? '✓✓' : '✓'}
+                    </span>
+                  )}
+                </p>
               </div>
             </li>
           );
